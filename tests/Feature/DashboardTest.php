@@ -17,20 +17,41 @@ class DashboardTest extends TestCase
         $this->withoutVite();
     }
 
-    #[Test] public function the_public_dashboard_renders_honest_demo_mode(): void
+    #[Test] public function the_public_landing_page_renders_successfully(): void
+    {
+        $response = $this->get('/');
+        $response->assertOk()
+            ->assertSee('HorizonBias')
+            ->assertSee('Multi-Timeframe')
+            ->assertSee('XAU/USD')
+            ->assertSee(route('dashboard'), false)
+            ->assertSee('HorizonBias provides educational market context and technical bias only.', false);
+    }
+
+    #[Test] public function the_landing_page_cta_links_to_dashboard(): void
+    {
+        $response = $this->get('/');
+        $response->assertOk()
+            ->assertSee('href="' . route('dashboard') . '"', false)
+            ->assertSee('Open Dashboard');
+    }
+
+    #[Test] public function the_dashboard_renders_honest_demo_mode_and_links_back_to_home(): void
     {
         config(['horizon.market_mode' => 'demo']);
-        $this->get('/')->assertOk()
+        $response = $this->get('/dashboard');
+        $response->assertOk()
             ->assertSee('HorizonBias')
             ->assertSee('Illustrative demo data')
             ->assertSee('OANDA:XAUUSD', false)
-            ->assertSee('not financial advice');
+            ->assertSee('href="' . url('/') . '"', false)
+            ->assertSee('HorizonBias provides educational market context and technical bias only.', false);
     }
 
     #[Test] public function it_persists_session_with_database_session_driver(): void
     {
         config(['session.driver' => 'database']);
-        $this->get('/')->assertOk();
+        $this->get('/dashboard')->assertOk();
         $this->assertDatabaseCount('sessions', 1);
     }
 
@@ -41,7 +62,12 @@ class DashboardTest extends TestCase
             ->assertJsonPath('mode', 'demo')
             ->assertJsonPath('symbol', 'XAU/USD')
             ->assertJsonCount(7, 'timeframes')
-            ->assertJsonStructure(['mode', 'notice', 'symbol', 'quote' => ['price', 'currency', 'change', 'change_percent', 'as_of'], 'overall' => ['score', 'label', 'summary', 'generated_at', 'stale'], 'timeframes', 'macro', 'system']);
+            ->assertJsonStructure([
+                'mode', 'notice', 'symbol',
+                'quote' => ['price', 'currency', 'change', 'change_percent', 'as_of'],
+                'overall' => ['score', 'label', 'summary', 'generated_at', 'stale'],
+                'timeframes', 'macro', 'system'
+            ]);
     }
 
     #[Test] public function production_requires_the_external_display_license_flag_for_live_mode(): void
@@ -57,15 +83,23 @@ class DashboardTest extends TestCase
     {
         $routes = collect(Route::getRoutes()->getRoutes());
         $this->assertFalse($routes->contains(fn ($route) => str_contains($route->uri(), 'login') || str_contains($route->uri(), 'register')));
-        $applicationRoutes = $routes->filter(fn ($route) => in_array($route->uri(), ['/', 'api/dashboard'], true));
+        $applicationRoutes = $routes->filter(fn ($route) => in_array($route->uri(), ['/', 'dashboard', 'api/dashboard'], true));
         $this->assertTrue($applicationRoutes->every(fn ($route) => array_diff($route->methods(), ['GET', 'HEAD']) === []));
     }
 
-    #[Test] public function the_page_does_not_offer_executable_trade_instructions(): void
+    #[Test] public function the_pages_do_not_offer_executable_trade_instructions(): void
     {
-        $content = strtolower($this->get('/')->getContent());
+        $landingContent = strtolower($this->get('/')->getContent());
+        $dashboardContent = strtolower($this->get('/dashboard')->getContent());
+
         foreach (['buy now', 'sell now', 'stop-loss', 'take-profit', 'position sizing'] as $phrase) {
-            $this->assertStringNotContainsString($phrase, $content);
+            $this->assertStringNotContainsString($phrase, $landingContent);
+            $this->assertStringNotContainsString($phrase, $dashboardContent);
         }
+    }
+
+    #[Test] public function logo_asset_is_present_on_filesystem(): void
+    {
+        $this->assertFileExists(public_path('images/horizonbias-logo.png'));
     }
 }
