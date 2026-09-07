@@ -38,9 +38,7 @@ a { color: inherit; text-decoration: none; }
 }
 .brand { display: flex; align-items: center; gap: 11px; font-size: 1.02rem; font-weight: 750; letter-spacing: -.02em; }
 .brand > span:last-child > span { color: var(--gold); }
-.brand-mark { position: relative; width: 34px; height: 34px; border: 1px solid rgba(240,207,130,.32); border-radius: 10px; background: var(--gold-soft); }
-.brand-mark::before { content: ""; position: absolute; width: 22px; height: 1px; background: var(--gold); left: 5px; top: 16px; }
-.brand-mark i { position: absolute; width: 10px; height: 10px; border: 1px solid var(--gold); border-radius: 50%; left: 11px; top: 11px; }
+.brand-mark { width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(240,207,130,.2)); }
 nav { display: flex; align-items: center; gap: 28px; color: var(--muted); font-size: .84rem; }
 nav a:hover, .text-link:hover, footer a:hover { color: var(--gold); }
 

@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Auditable multi-timeframe technical bias and macro context for XAU/USD.">
+    <link rel="icon" type="image/png" href="{{ asset('images/horizonbias-logo.png') }}">
     <title>HorizonBias — XAU/USD Market Context</title>
     <script type="application/json" id="dashboard-data">{!! json_encode($dashboard, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) !!}</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -17,9 +18,8 @@
     <header class="border-b border-white/[0.07] bg-[#07090d]/85 backdrop-blur-xl">
         <div class="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
             <a href="#overview" class="group flex items-center gap-3" aria-label="HorizonBias home">
-                <span class="relative grid h-10 w-10 place-items-center overflow-hidden rounded-xl border border-amber-300/25 bg-amber-300/[0.06]">
-                    <span class="absolute h-px w-7 bg-amber-200"></span>
-                    <span class="h-3 w-3 rounded-full border border-amber-200/80 transition-transform group-hover:translate-y-[-2px]"></span>
+                <span class="relative grid h-10 w-10 place-items-center overflow-hidden rounded-xl border border-amber-300/25 bg-amber-300/[0.06] p-0.5">
+                    <img src="{{ asset('images/horizonbias-logo.png') }}" alt="" class="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(251,191,36,0.22)]" width="40" height="40" decoding="async">
                 </span>
                 <span><strong class="block text-base tracking-tight">Horizon<span class="text-amber-200">Bias</span></strong><small class="block text-[0.62rem] uppercase tracking-[0.24em] text-slate-500">Gold intelligence</small></span>
             </a>
