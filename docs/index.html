@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="HorizonBias is an auditable, multi-timeframe XAU/USD technical-bias dashboard built with Laravel.">
+    <meta name="theme-color" content="#080b10">
+    <title>HorizonBias — Project Overview</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="#top" aria-label="HorizonBias project overview">
+            <span class="brand-mark" aria-hidden="true"><i></i></span>
+            <span>Horizon<span>Bias</span></span>
+        </a>
+        <nav aria-label="Project navigation">
+            <a href="#features">Features</a>
+            <a href="#architecture">Architecture</a>
+            <a class="button button-small" href="https://github.com/ivanleedorillo-ops/HorizonBias">View repository</a>
+        </nav>
+    </header>
+
+    <main id="top">
+        <section class="hero shell">
+            <div class="hero-copy">
+                <p class="eyebrow">Open-source project · XAU/USD only</p>
+                <h1>Market context across every meaningful horizon.</h1>
+                <p class="lead">HorizonBias is a Laravel dashboard that turns completed gold candles into transparent technical-bias scores, then presents AI-assisted macro context separately.</p>
+                <div class="actions">
+                    <a class="button" href="https://github.com/ivanleedorillo-ops/HorizonBias">Explore the source</a>
+                    <a class="text-link" href="#run-locally">Run it locally <span aria-hidden="true">→</span></a>
+                </div>
+                <ul class="badges" aria-label="Project technologies">
+                    <li>Laravel 12</li><li>Blade</li><li>Alpine.js</li><li>Tailwind CSS</li><li>PHP 8.2+</li>
+                </ul>
+            </div>
+            <aside class="bias-card" aria-label="Illustrative project preview">
+                <div class="card-top"><span>XAU / USD</span><span class="demo-pill">Project preview</span></div>
+                <p class="card-label">Multi-timeframe engine</p>
+                <div class="timeframes">
+                    <span>5m</span><span>15m</span><span>1h</span><span>4h</span><span>1d</span><span>1w</span><span>1mo</span>
+                </div>
+                <div class="score-line"><strong>−100</strong><i></i><strong>+100</strong></div>
+                <p class="card-note">Deterministic scoring from trend, momentum, confirmed market structure, and breakouts.</p>
+            </aside>
+        </section>
+
+        <section class="notice shell" aria-label="GitHub Pages limitation">
+            <strong>Repository overview only.</strong>
+            <span>GitHub Pages cannot execute Laravel, scheduled jobs, databases, or private API integrations. Run the application locally or deploy it to PHP-capable hosting for live functionality.</span>
+        </section>
+
+        <section id="features" class="section shell">
+            <div class="section-heading">
+                <p class="eyebrow">Core capabilities</p>
+                <h2>Built for evidence, not instructions.</h2>
+            </div>
+            <div class="feature-grid">
+                <article><span class="number">01</span><h3>Seven timeframes</h3><p>Technical conditions from 5 minutes through 1 month, with weighted higher-timeframe agreement.</p></article>
+                <article><span class="number">02</span><h3>Auditable scoring</h3><p>EMA alignment, RSI, MACD, rate of change, confirmed pivots, and breakouts remain visible and testable.</p></article>
+                <article><span class="number">03</span><h3>Separate macro context</h3><p>Gemini-generated context never changes or overrides the deterministic technical score.</p></article>
+                <article><span class="number">04</span><h3>Honest demo boundary</h3><p>Illustrative fixtures are clearly labeled whenever live-data access or public-display licensing is unavailable.</p></article>
+            </div>
+        </section>
+
+        <section id="architecture" class="section shell split">
+            <div class="section-heading">
+                <p class="eyebrow">Architecture</p>
+                <h2>Providers stay outside visitor requests.</h2>
+                <p>Scheduled commands collect and validate data, calculate snapshots, and store results. The public controller reads only persisted or cached state.</p>
+            </div>
+            <ol class="flow">
+                <li><span>1</span><div><strong>Collect</strong><p>Twelve Data candles and optional grounded Gemini context.</p></div></li>
+                <li><span>2</span><div><strong>Validate and calculate</strong><p>Normalize completed candles and run local indicators.</p></div></li>
+                <li><span>3</span><div><strong>Persist</strong><p>Store candles, bias snapshots, and last-known-good briefs.</p></div></li>
+                <li><span>4</span><div><strong>Present</strong><p>Serve the responsive dashboard and read-only JSON contract.</p></div></li>
+            </ol>
+        </section>
+
+        <section id="run-locally" class="section shell run-card">
+            <div>
+                <p class="eyebrow">Development setup</p>
+                <h2>Run HorizonBias locally.</h2>
+                <p>Clone the repository, install PHP and frontend dependencies, configure <code>.env</code>, then start Laravel.</p>
+            </div>
+            <pre aria-label="Local setup commands"><code>git clone https://github.com/ivanleedorillo-ops/HorizonBias.git
+cd HorizonBias
+composer install
+npm.cmd install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate
+npm.cmd run build
+php artisan serve</code></pre>
+        </section>
+    </main>
+
+    <footer class="shell">
+        <p><strong>HorizonBias</strong> provides educational market context and technical bias only. It is not financial advice, a trading signal, or a recommendation to buy or sell.</p>
+        <a href="https://github.com/ivanleedorillo-ops/HorizonBias">GitHub repository</a>
+    </footer>
+</body>
+</html>
