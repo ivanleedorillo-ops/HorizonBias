@@ -1,0 +1,34 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source "../**/*.blade.php";
+@source "../**/*.js";
+@source "../**/*.vue";
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@layer base {
+    :root { color-scheme: dark; }
+    html { scroll-behavior: smooth; }
+    body { @apply bg-[#07090d] text-slate-100 antialiased; }
+    [x-cloak] { display: none !important; }
+    *:focus-visible { @apply outline-2 outline-offset-2 outline-amber-300; }
+}
+
+@layer components {
+    .panel { @apply rounded-2xl border border-white/[0.08] bg-[#0d1118]/95 shadow-2xl shadow-black/20; }
+    .eyebrow { @apply text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500; }
+    .status-dot { @apply inline-block h-1.5 w-1.5 rounded-full bg-current shadow-[0_0_10px_currentColor]; }
+    .bias-bullish { @apply border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-300; }
+    .bias-bearish { @apply border-rose-400/25 bg-rose-400/[0.08] text-rose-300; }
+    .bias-neutral { @apply border-amber-300/25 bg-amber-300/[0.08] text-amber-200; }
+    .metric-row { @apply flex items-center justify-between gap-4 border-b border-white/[0.06] py-3 last:border-0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
