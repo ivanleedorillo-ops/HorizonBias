@@ -9,4 +9,4 @@ Schedule::command('market:refresh-bias --timeframe=4h')->cron('5 */4 * * *')->wi
 Schedule::command('market:refresh-bias --timeframe=1d')->hourlyAt(7)->withoutOverlapping();
 Schedule::command('market:refresh-bias --timeframe=1w')->cron('9 */6 * * *')->withoutOverlapping();
 Schedule::command('market:refresh-bias --timeframe=1mo')->twiceDaily(1, 13)->withoutOverlapping();
-Schedule::command('macro:refresh')->cron('11 */3 * * *')->withoutOverlapping();
+Schedule::command('ai:refresh-consensus')->cron('11 */3 * * *')->withoutOverlapping();

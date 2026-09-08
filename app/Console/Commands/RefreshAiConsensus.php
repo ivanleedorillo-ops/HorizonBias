@@ -5,11 +5,11 @@ namespace App\Console\Commands;
 use App\Services\Macro\MacroRefreshService;
 use Illuminate\Console\Command;
 
-class RefreshMacroContext extends Command
+class RefreshAiConsensus extends Command
 {
-    protected $signature = 'macro:refresh';
+    protected $signature = 'ai:refresh-consensus';
 
-    protected $description = 'Generate the source-grounded dual-AI macro consensus for gold';
+    protected $description = 'Run the free-tier-safe Gemini and Groq GPT-OSS consensus workflow';
 
     public function handle(MacroRefreshService $service): int
     {

@@ -327,53 +327,110 @@
             </aside>
         </section>
 
-        <!-- AI Macro Context Section (Separately Scored) -->
-        <section class="panel p-6 sm:p-8" aria-labelledby="macro-heading">
-            <div class="grid gap-8 lg:grid-cols-[0.45fr_0.55fr]">
-                <div class="space-y-4">
+        <!-- Dual-AI Macro Context (Always Separate From Deterministic Technicals) -->
+        <section class="panel p-5 sm:p-8" aria-labelledby="macro-heading">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
                     <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-slate-300">
                         <span class="status-dot text-amber-300"></span>
-                        <span>Official-Feed AI Context · Independent from Technicals</span>
+                        <span>Gemini + GPT-OSS · Official-feed evidence</span>
                     </div>
-                    <h2 id="macro-heading" class="text-2xl font-bold text-white tracking-tight">Macroeconomic Brief</h2>
-                    <div class="flex items-center gap-2">
-                        <span class="rounded-lg border px-3 py-1 text-xs font-bold capitalize"
-                              :class="biasBadgeClass(data.macro.stance)"
-                              x-text="data.macro.stance + ' Stance'"></span>
-                        <span class="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1 text-xs font-semibold capitalize text-slate-300">
-                            <span x-text="data.macro.risk_level"></span> Risk
-                        </span>
-                    </div>
-                    <p class="text-sm leading-relaxed text-slate-300" x-text="data.macro.summary"></p>
-                    <p class="text-[0.72rem] text-slate-400">
-                        Updated: <span x-text="formatTime(data.macro.generated_at)"></span>
-                    </p>
+                    <h2 id="macro-heading" class="mt-4 text-2xl font-bold tracking-tight text-white">Dual-AI Market Context</h2>
+                    <p class="mt-1 text-xs text-slate-400">Independent analyses, combined by deterministic Laravel rules—not by model voting.</p>
                 </div>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <span class="rounded-lg border px-3 py-1 font-bold capitalize" :class="biasBadgeClass(data.macro.gold_bias)" x-text="data.macro.gold_bias + ' Gold'"></span>
+                    <span class="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1 font-semibold capitalize text-slate-300" x-text="data.macro.usd_strength + ' USD'"></span>
+                    <span class="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1 font-semibold text-slate-300" x-text="data.macro.confidence + '% confidence'"></span>
+                </div>
+            </div>
 
-                <!-- Verified Macro Events Grid -->
+            <div class="mt-6 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+                <article class="rounded-2xl border border-amber-300/20 bg-amber-300/[0.035] p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <p class="eyebrow text-amber-300">Laravel Consensus</p>
+                        <span class="rounded-full border border-white/10 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-slate-300" x-text="humanize(data.macro.agreement)"></span>
+                    </div>
+                    <p class="mt-4 text-sm leading-relaxed text-slate-200" x-text="data.macro.summary"></p>
+                    <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                        <div class="rounded-xl border border-white/[0.07] bg-black/10 p-3">
+                            <span class="block text-[0.65rem] uppercase tracking-wider text-slate-500">Risk level</span>
+                            <strong class="mt-1 block capitalize text-slate-200" x-text="data.macro.risk_level"></strong>
+                        </div>
+                        <div class="rounded-xl border border-white/[0.07] bg-black/10 p-3">
+                            <span class="block text-[0.65rem] uppercase tracking-wider text-slate-500">Assessment</span>
+                            <strong class="mt-1 block capitalize text-slate-200" x-text="humanize(data.macro.status)"></strong>
+                        </div>
+                    </div>
+                    <div x-show="data.macro.limitations?.length" class="mt-4 border-t border-white/[0.07] pt-4">
+                        <p class="text-[0.65rem] font-semibold uppercase tracking-wider text-slate-500">Limitations</p>
+                        <ul class="mt-2 space-y-1.5 text-xs leading-relaxed text-slate-400">
+                            <template x-for="limitation in data.macro.limitations" :key="limitation">
+                                <li class="flex gap-2"><span class="text-amber-300">•</span><span x-text="limitation"></span></li>
+                            </template>
+                        </ul>
+                    </div>
+                    <p class="mt-4 text-[0.7rem] text-slate-500">Updated: <span x-text="formatTime(data.macro.generated_at)"></span></p>
+                </article>
+
                 <div class="grid gap-3 sm:grid-cols-2">
-                    <template x-for="event in data.macro.events" :key="event.source_url">
-                        <a :href="event.source_url" target="_blank" rel="noopener noreferrer"
-                           class="panel-interactive flex flex-col justify-between p-4 group">
-                            <div>
-                                <div class="flex items-center justify-between text-[0.68rem] text-slate-400">
-                                    <span class="font-semibold uppercase tracking-wider text-slate-400" x-text="event.source_name"></span>
-                                    <span class="font-bold capitalize"
-                                          :class="biasTone(event.direction) === 'bullish' ? 'text-emerald-400' : (biasTone(event.direction) === 'bearish' ? 'text-rose-400' : 'text-amber-300')"
-                                          x-text="event.direction"></span>
+                    <template x-for="analysis in data.macro.analyses" :key="analysis.provider">
+                        <article class="rounded-2xl border border-white/[0.08] bg-white/[0.018] p-5">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <h3 class="font-semibold text-white" x-text="analysis.provider"></h3>
+                                    <p class="mt-0.5 break-all text-[0.65rem] text-slate-500" x-text="analysis.model"></p>
                                 </div>
-                                <h3 class="mt-2 text-xs font-semibold leading-snug text-white group-hover:text-amber-200 transition-colors" x-text="event.headline"></h3>
+                                <span class="rounded-md border px-2 py-1 text-[0.65rem] font-bold capitalize" :class="biasBadgeClass(analysis.gold_bias)" x-text="analysis.gold_bias"></span>
+                            </div>
+                            <p class="mt-4 text-xs leading-relaxed text-slate-300" x-text="analysis.summary"></p>
+                            <dl class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                                <div><dt class="text-slate-500">USD</dt><dd class="mt-0.5 font-semibold capitalize text-slate-300" x-text="analysis.usd_strength"></dd></div>
+                                <div><dt class="text-slate-500">Confidence</dt><dd class="mt-0.5 font-semibold text-slate-300" x-text="analysis.confidence + '%'"></dd></div>
+                            </dl>
+                            <div x-show="analysis.supporting_factors?.length" class="mt-4">
+                                <p class="text-[0.62rem] font-semibold uppercase tracking-wider text-emerald-400">Supporting context</p>
+                                <ul class="mt-1.5 space-y-1 text-[0.72rem] leading-relaxed text-slate-400">
+                                    <template x-for="factor in analysis.supporting_factors" :key="factor"><li x-text="'• ' + factor"></li></template>
+                                </ul>
+                            </div>
+                            <div x-show="analysis.opposing_factors?.length" class="mt-3">
+                                <p class="text-[0.62rem] font-semibold uppercase tracking-wider text-rose-400">Opposing context</p>
+                                <ul class="mt-1.5 space-y-1 text-[0.72rem] leading-relaxed text-slate-400">
+                                    <template x-for="factor in analysis.opposing_factors" :key="factor"><li x-text="'• ' + factor"></li></template>
+                                </ul>
+                            </div>
+                        </article>
+                    </template>
+                    <div x-show="!data.macro.analyses?.length" class="col-span-full grid min-h-48 place-items-center rounded-xl border border-dashed border-white/10 p-6 text-center">
+                        <p class="text-sm text-slate-400">No validated AI assessment is available yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-7 border-t border-white/[0.07] pt-6">
+                <div class="mb-3 flex items-center justify-between gap-3">
+                    <h3 class="text-sm font-semibold text-white">Verified evidence used by the analysts</h3>
+                    <span class="text-[0.68rem] text-slate-500" x-text="(data.macro.events?.length ?? 0) + ' cited item(s)'"></span>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <template x-for="event in data.macro.events" :key="event.source_url">
+                        <a :href="event.source_url" target="_blank" rel="noopener noreferrer" class="panel-interactive flex flex-col justify-between p-4 group">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 text-[0.68rem]">
+                                    <span class="font-semibold uppercase tracking-wider text-slate-400" x-text="event.source_name"></span>
+                                    <span class="font-bold capitalize" :class="biasTone(event.direction) === 'bullish' ? 'text-emerald-400' : (biasTone(event.direction) === 'bearish' ? 'text-rose-400' : 'text-amber-300')" x-text="event.direction"></span>
+                                </div>
+                                <h4 class="mt-2 text-xs font-semibold leading-snug text-white transition-colors group-hover:text-amber-200" x-text="event.headline"></h4>
                                 <p class="mt-2 text-[0.75rem] leading-relaxed text-slate-400" x-text="event.why_it_matters"></p>
                             </div>
-                            <span class="mt-3 block text-[0.68rem] font-medium text-amber-300/80 group-hover:underline">
-                                Read Source ↗
-                            </span>
+                            <span class="mt-3 block text-[0.68rem] font-medium text-amber-300/80 group-hover:underline">Read official source ↗</span>
                         </a>
                     </template>
-                    <div x-show="!data.macro.events?.length" class="col-span-full grid min-h-36 place-items-center rounded-xl border border-dashed border-white/10 bg-white/[0.01] p-6 text-center">
+                    <div x-show="!data.macro.events?.length" class="col-span-full grid min-h-32 place-items-center rounded-xl border border-dashed border-white/10 bg-white/[0.01] p-6 text-center">
                         <div class="space-y-1">
-                            <p class="text-sm font-medium text-slate-300">No verified event cards available</p>
-                            <p class="text-xs text-slate-400">No recent gold-relevant releases were available from the configured official feeds.</p>
+                            <p class="text-sm font-medium text-slate-300">No verified evidence was cited</p>
+                            <p class="text-xs text-slate-400">The assessment may be technical-only or no recent relevant official releases were available.</p>
                         </div>
                     </div>
                 </div>

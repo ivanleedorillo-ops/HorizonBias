@@ -2,11 +2,11 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\AiProviderException;
 use App\Services\Macro\GeminiMacroContextProvider;
-use App\Services\Macro\OfficialMacroFeedProvider;
+use App\Services\Macro\MacroAnalysisSchema;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use Tests\TestCase;
 
 class GeminiMacroContextProviderTest extends TestCase
@@ -16,122 +16,102 @@ class GeminiMacroContextProviderTest extends TestCase
         parent::setUp();
 
         config([
+            'horizon.ai.free_tier_only' => true,
             'horizon.gemini.api_key' => 'secret-test-key',
-            'horizon.gemini.search_grounding' => false,
-            'horizon.macro_feeds.sources' => [],
+            'horizon.gemini.model' => 'gemini-3.5-flash-lite',
+            'horizon.gemini.free_tier_models' => ['gemini-3.5-flash-lite'],
         ]);
     }
 
     #[Test]
-    public function it_requests_structured_output_without_search_tools(): void
+    public function it_requests_strict_structured_analysis_without_search_tools(): void
     {
-        Http::fake(['*/interactions' => Http::response($this->interactionResponse([
-            'stance' => 'mixed',
-            'risk_level' => 'medium',
-            'summary' => 'Technical evidence is mixed and no official feed items are available.',
-            'events' => [],
-        ]))]);
+        Http::fake(['*/interactions' => Http::response($this->interactionResponse($this->validResult()))]);
 
-        $result = $this->provider()->generate([]);
+        $result = $this->provider()->generate([], []);
 
-        $this->assertSame('mixed', $result['stance']);
-        $this->assertSame([], $result['events']);
+        $this->assertSame('neutral', $result['gold_bias']);
+        $this->assertSame('Gemini', $result['provider']);
         Http::assertSent(function ($request) {
             $data = $request->data();
 
             return $request->hasHeader('x-goog-api-key', 'secret-test-key')
                 && ! array_key_exists('tools', $data)
                 && data_get($data, 'response_format.type') === 'text'
-                && data_get($data, 'response_format.schema.properties.events.maxItems') === 0;
+                && data_get($data, 'response_format.schema.properties.citations.maxItems') === 0;
         });
     }
 
     #[Test]
-    public function it_hydrates_only_server_owned_official_feed_citations(): void
+    public function it_hydrates_only_server_owned_citations(): void
     {
-        $evidence = $this->evidence();
-        $response = [
-            'stance' => 'mixed',
-            'risk_level' => 'medium',
-            'summary' => 'Official monetary-policy context is mixed.',
-            'events' => [[
-                'citation_id' => 'S1',
-                'why_it_matters' => 'Policy-rate expectations affect real yields and the opportunity cost of gold.',
-                'direction' => 'mixed',
-            ]],
-        ];
+        $result = $this->validResult();
+        $result['citations'] = [[
+            'citation_id' => 'S1',
+            'why_it_matters' => 'Policy-rate expectations affect real yields and gold carrying costs.',
+            'direction' => 'mixed',
+        ]];
+        Http::fake(['*/interactions' => Http::response($this->interactionResponse($result))]);
 
-        Http::fake(['*/interactions' => Http::response($this->interactionResponse($response))]);
-        $result = $this->provider()->validate($response, $evidence);
+        $analysis = $this->provider()->generate([], $this->evidence());
 
-        $this->assertSame('Federal Reserve issues FOMC statement', $result['events'][0]['headline']);
-        $this->assertSame('Federal Reserve — Monetary Policy', $result['events'][0]['source_name']);
-        $this->assertSame('https://www.federalreserve.gov/example.htm', $result['events'][0]['source_url']);
-        $this->assertArrayNotHasKey('citation_id', $result['events'][0]);
+        $this->assertSame('Federal Reserve issues FOMC statement', $analysis['events'][0]['headline']);
+        $this->assertSame('https://www.federalreserve.gov/example.htm', $analysis['events'][0]['source_url']);
     }
 
     #[Test]
-    public function it_rejects_unknown_citation_ids_and_invalid_enums(): void
+    public function it_rejects_unknown_citations_and_invalid_enums(): void
     {
-        $base = [
-            'stance' => 'mixed',
-            'risk_level' => 'medium',
-            'summary' => 'Mixed evidence.',
-            'events' => [[
-                'citation_id' => 'S999',
-                'why_it_matters' => 'Unsupported citation.',
-                'direction' => 'mixed',
-            ]],
-        ];
+        $result = $this->validResult();
+        $result['gold_bias'] = 'certain';
+        Http::fake(['*/interactions' => Http::response($this->interactionResponse($result))]);
 
-        foreach ([$base, [...$base, 'stance' => 'certain']] as $invalid) {
-            try {
-                $this->provider()->validate($invalid, $this->evidence());
-                $this->fail('Invalid output should throw.');
-            } catch (RuntimeException) {
-                $this->assertTrue(true);
-            }
-        }
+        $this->expectException(AiProviderException::class);
+        $this->provider()->generate([], $this->evidence());
     }
 
     #[Test]
-    public function it_uses_the_last_model_output_step(): void
-    {
-        $valid = [
-            'stance' => 'mixed',
-            'risk_level' => 'medium',
-            'summary' => 'Verified forces are mixed.',
-            'events' => [],
-        ];
-        Http::fake(['*/interactions' => Http::response([
-            'steps' => [
-                ['type' => 'model_output', 'content' => [['type' => 'text', 'text' => '{"stance":"mixed"}']]],
-                ['type' => 'tool_result', 'content' => []],
-                ['type' => 'model_output', 'content' => [['type' => 'text', 'text' => json_encode($valid)]]],
-            ],
-        ])]);
-
-        $result = $this->provider()->generate([]);
-
-        $this->assertSame('Verified forces are mixed.', $result['summary']);
-    }
-
-    #[Test]
-    public function it_rejects_http_failures_without_exposing_the_key(): void
+    public function it_classifies_quota_failures_without_exposing_the_key(): void
     {
         Http::fake(['*/interactions' => Http::response([], 429)]);
 
         try {
-            $this->provider()->generate([]);
-            $this->fail('Expected provider failure.');
-        } catch (RuntimeException $exception) {
+            $this->provider()->generate([], []);
+            $this->fail('Expected a quota failure.');
+        } catch (AiProviderException $exception) {
+            $this->assertSame('quota_limited', $exception->category);
             $this->assertStringNotContainsString('secret-test-key', $exception->getMessage());
         }
     }
 
+    #[Test]
+    public function it_refuses_a_model_outside_the_free_tier_allowlist(): void
+    {
+        config(['horizon.gemini.model' => 'paid-or-unapproved-model']);
+
+        $this->expectException(AiProviderException::class);
+        $this->provider()->generate([], []);
+        Http::assertNothingSent();
+    }
+
     private function provider(): GeminiMacroContextProvider
     {
-        return new GeminiMacroContextProvider(new OfficialMacroFeedProvider);
+        return new GeminiMacroContextProvider(new MacroAnalysisSchema);
+    }
+
+    private function validResult(): array
+    {
+        return [
+            'gold_bias' => 'neutral',
+            'usd_strength' => 'neutral',
+            'risk_level' => 'medium',
+            'confidence' => 55,
+            'summary' => 'Technical and macro evidence is mixed.',
+            'supporting_factors' => ['Longer-horizon structure remains constructive.'],
+            'opposing_factors' => ['Dollar conditions may constrain gold.'],
+            'risk_factors' => ['Evidence can become stale.'],
+            'citations' => [],
+        ];
     }
 
     private function evidence(): array
@@ -141,7 +121,7 @@ class GeminiMacroContextProviderTest extends TestCase
             'headline' => 'Federal Reserve issues FOMC statement',
             'source_name' => 'Federal Reserve — Monetary Policy',
             'source_url' => 'https://www.federalreserve.gov/example.htm',
-            'published_at' => '2026-09-08T10:00:00+00:00',
+            'published_at' => now('UTC')->toIso8601String(),
             'source_summary' => 'The Committee published its policy statement.',
         ]];
     }

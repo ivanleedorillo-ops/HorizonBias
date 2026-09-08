@@ -87,6 +87,9 @@ const horizonDashboard = () => {
                 hour12: false
             }).format(new Date(value)) + ' UTC';
         },
+        humanize(value = '') {
+            return String(value ?? '').replaceAll('_', ' ');
+        },
     };
 };
 

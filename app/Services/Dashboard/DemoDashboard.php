@@ -33,10 +33,17 @@ final class DemoDashboard
             'timeframes' => $frames,
             'macro' => [
                 'stance' => 'mixed', 'risk_level' => 'medium',
-                'summary' => 'Illustrative context: softer yields may support gold while a firm US dollar can limit momentum. Configure Gemini for verified current events.',
+                'gold_bias' => 'neutral', 'usd_strength' => 'neutral', 'confidence' => 52, 'agreement' => 'agree',
+                'summary' => 'Illustrative dual-AI consensus: softer yields may support gold while a firm US dollar can limit momentum.',
+                'limitations' => ['Illustrative demo data — no AI provider was called.'],
+                'analyses' => [
+                    ['provider' => 'Gemini (demo)', 'model' => 'illustrative', 'status' => 'demo', 'gold_bias' => 'neutral', 'usd_strength' => 'neutral', 'risk_level' => 'medium', 'confidence' => 54, 'summary' => 'Illustrative Gemini assessment for layout testing only.', 'supporting_factors' => ['Softer-yield scenario'], 'opposing_factors' => ['Firm-dollar scenario'], 'risk_factors' => [], 'citation_ids' => []],
+                    ['provider' => 'Groq GPT-OSS (demo)', 'model' => 'illustrative', 'status' => 'demo', 'gold_bias' => 'neutral', 'usd_strength' => 'neutral', 'risk_level' => 'medium', 'confidence' => 50, 'summary' => 'Illustrative GPT-OSS assessment for layout testing only.', 'supporting_factors' => ['Defensive demand scenario'], 'opposing_factors' => ['Dollar resilience scenario'], 'risk_factors' => [], 'citation_ids' => []],
+                ],
+                'provider_status' => [],
                 'events' => [], 'generated_at' => '2026-09-01T12:00:00+00:00', 'stale' => false, 'status' => 'demo',
             ],
-            'system' => ['market_provider' => 'Illustrative fixtures', 'ai_provider' => 'Illustrative fixtures', 'licensing_gate_applied' => $licensingGateApplied],
+            'system' => ['market_provider' => 'Illustrative fixtures', 'ai_provider' => 'Gemini + Groq GPT-OSS (illustrative)', 'licensing_gate_applied' => $licensingGateApplied],
         ];
     }
 }

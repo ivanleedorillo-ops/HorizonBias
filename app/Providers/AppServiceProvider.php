@@ -2,9 +2,7 @@
 
 namespace App\Providers;
 
-use App\Contracts\MacroContextProvider;
 use App\Contracts\MarketDataProvider;
-use App\Services\Macro\GeminiMacroContextProvider;
 use App\Services\Market\TwelveDataMarketDataProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -19,7 +17,6 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(MarketDataProvider::class, TwelveDataMarketDataProvider::class);
-        $this->app->bind(MacroContextProvider::class, GeminiMacroContextProvider::class);
     }
 
     /**

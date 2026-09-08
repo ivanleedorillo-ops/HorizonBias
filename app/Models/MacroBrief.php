@@ -13,6 +13,10 @@ class MacroBrief extends Model
         return [
             'events' => 'array',
             'sources' => 'array',
+            'analyses' => 'array',
+            'consensus' => 'array',
+            'provider_status' => 'array',
+            'confidence' => 'integer',
             'generated_at' => 'immutable_datetime',
         ];
     }

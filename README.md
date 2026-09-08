@@ -1,13 +1,15 @@
 # HorizonBias
 
-HorizonBias is a Laravel 12 decision-support dashboard dedicated to XAU/USD. It combines a deterministic, auditable technical score across seven timeframes with a separately displayed Gemini macro brief. It does not provide entries, exits, position sizing, trade execution, or personalized financial advice.
+HorizonBias is a 100% AI-assisted Laravel 12 decision-support dashboard dedicated to XAU/USD. It combines a deterministic, auditable technical score across seven timeframes with separately displayed Gemini and Groq GPT-OSS macro assessments and a rule-based consensus. It does not provide entries, exits, position sizing, trade execution, or personalized financial advice.
 
 ## Architecture
 
 - `MarketDataProvider` normalizes completed candles; the included adapter targets Twelve Data.
 - `IndicatorCalculator` calculates EMA, Wilder RSI/ATR/ADX, MACD, ROC, and confirmed pivots locally.
 - `BiasScorer` creates component, timeframe, and weighted multi-timeframe scores.
-- Scheduled Artisan commands persist candles, bias snapshots, and Gemini macro briefs. HTTP visitors only read stored state.
+- Scheduled Artisan commands persist candles, bias snapshots, independent AI assessments, and a deterministic dual-AI consensus. HTTP visitors only read stored state.
+- Gemini and Groq GPT-OSS receive the same immutable technical/evidence package. Laravel—not either model—calculates agreement and confidence.
+- A local daily request cap and model allowlists keep the workflow intentionally within the configured free-tier boundary; no paid fallback exists.
 - The public TradingView widget is display-only and completely separate from HorizonBias calculations.
 - Demo mode provides deterministic, explicitly dated illustrative fixtures without needing credentials.
 
@@ -64,19 +66,30 @@ php artisan schedule:work
 
 Refresh one horizon with `php artisan market:refresh-bias --timeframe=4h`.
 
-## Gemini macro context
+## Free-tier dual-AI macro context
 
 ```dotenv
 GEMINI_API_KEY=your_key
 GEMINI_MODEL=gemini-3.5-flash-lite
 GEMINI_SEARCH_GROUNDING=false
+
+DUAL_AI_ENABLED=true
+AI_FREE_TIER_ONLY=true
+AI_DAILY_REQUEST_CAP=24
+GROQ_API_KEY=your_groq_console_key
+GROQ_MODEL=openai/gpt-oss-120b
+
 MACRO_REFRESH_MINUTES=180
 MACRO_FEED_MAX_AGE_DAYS=14
 ```
 
-Run `php artisan macro:refresh`. HorizonBias retrieves bounded recent evidence from the Federal Reserve monetary-policy feed, Federal Reserve speeches and testimony feed, and U.S. Bureau of Economic Analysis feed. Gemini analyzes that catalogue but may return only server-issued citation IDs. The application then hydrates the official headline, publication timestamp, source name, and allow-listed HTTPS URL; Gemini-generated URLs are never accepted. One unavailable feed does not prevent the remaining official sources from being used.
+Create the Groq key at `console.groq.com`; an xAI Grok key is a different product and will not work. Never commit either API key. API provider free tiers are rate-limited and may change. `AI_FREE_TIER_ONLY=true` restricts HorizonBias to its configured free-tier model allowlists, `AI_DAILY_REQUEST_CAP=24` stops each provider at 24 application attempts per UTC day, and HorizonBias has no automatic paid-model fallback. Provider account billing settings remain the developer's responsibility.
 
-The default maximum evidence age is 14 days because major policy and economic releases are not necessarily published every day. If no recent relevant evidence exists, the brief remains technical-only and its event list is empty. Invalid or malformed AI results are rejected, and the previous valid brief is retained as stale.
+Run `php artisan ai:refresh-consensus`. The older `php artisan macro:refresh` command remains as a compatible alias. HorizonBias makes at most one Gemini request and one Groq request per refresh, then Laravel calculates agreement, final context, and confidence without another AI call. If one provider is unavailable, confidence is capped and the result is marked partial. If both fail, the last valid brief is retained as stale.
+
+HorizonBias retrieves bounded recent evidence from the Federal Reserve monetary-policy feed, Federal Reserve speeches and testimony feed, and U.S. Bureau of Economic Analysis feed. Both models analyze the same catalogue but may return only server-issued citation IDs. The application hydrates the official headline, publication timestamp, source name, and allow-listed HTTPS URL; model-generated URLs are never accepted. One unavailable feed does not prevent the remaining official sources from being used.
+
+The default maximum evidence age is 14 days because major policy and economic releases are not necessarily published every day. If no recent relevant evidence exists, the brief remains technical-only and its event list is empty. Invalid or malformed AI results are rejected. The public dashboard shows both independent assessments, their USD-strength views, the deterministic consensus, disagreement, confidence, limitations, and verified citations.
 
 ## Scheduler deployment
 
