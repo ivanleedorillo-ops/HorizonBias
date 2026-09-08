@@ -333,7 +333,7 @@
                 <div class="space-y-4">
                     <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-slate-300">
                         <span class="status-dot text-amber-300"></span>
-                        <span>AI Grounded Context · Independent from Technicals</span>
+                        <span>Official-Feed AI Context · Independent from Technicals</span>
                     </div>
                     <h2 id="macro-heading" class="text-2xl font-bold text-white tracking-tight">Macroeconomic Brief</h2>
                     <div class="flex items-center gap-2">
@@ -373,7 +373,7 @@
                     <div x-show="!data.macro.events?.length" class="col-span-full grid min-h-36 place-items-center rounded-xl border border-dashed border-white/10 bg-white/[0.01] p-6 text-center">
                         <div class="space-y-1">
                             <p class="text-sm font-medium text-slate-300">No verified event cards available</p>
-                            <p class="text-xs text-slate-400">Configure Gemini search grounding for real-time news citations.</p>
+                            <p class="text-xs text-slate-400">No recent gold-relevant releases were available from the configured official feeds.</p>
                         </div>
                     </div>
                 </div>

@@ -16,6 +16,31 @@ return [
         'search_grounding' => env('GEMINI_SEARCH_GROUNDING', true),
         'refresh_minutes' => (int) env('MACRO_REFRESH_MINUTES', 180),
     ],
+    'macro_feeds' => [
+        'max_age_days' => (int) env('MACRO_FEED_MAX_AGE_DAYS', 14),
+        'max_items' => 10,
+        'max_items_per_source' => 4,
+        'sources' => [
+            [
+                'name' => 'Federal Reserve — Monetary Policy',
+                'url' => 'https://www.federalreserve.gov/feeds/press_monetary.xml',
+                'allowed_hosts' => ['www.federalreserve.gov'],
+                'relevance_filter' => false,
+            ],
+            [
+                'name' => 'Federal Reserve — Speeches & Testimony',
+                'url' => 'https://www.federalreserve.gov/feeds/speeches_and_testimony.xml',
+                'allowed_hosts' => ['www.federalreserve.gov'],
+                'relevance_filter' => true,
+            ],
+            [
+                'name' => 'U.S. Bureau of Economic Analysis',
+                'url' => 'https://apps.bea.gov/rss/rss.xml',
+                'allowed_hosts' => ['www.bea.gov'],
+                'relevance_filter' => true,
+            ],
+        ],
+    ],
     'timeframes' => [
         '5m' => ['label' => '5 Minutes', 'interval' => '5min', 'weight' => 0.05, 'stale_after' => 15],
         '15m' => ['label' => '15 Minutes', 'interval' => '15min', 'weight' => 0.10, 'stale_after' => 45],

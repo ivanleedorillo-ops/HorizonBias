@@ -68,12 +68,15 @@ Refresh one horizon with `php artisan market:refresh-bias --timeframe=4h`.
 
 ```dotenv
 GEMINI_API_KEY=your_key
-GEMINI_MODEL=gemini-3.7-flash
-GEMINI_SEARCH_GROUNDING=true
+GEMINI_MODEL=gemini-3.5-flash-lite
+GEMINI_SEARCH_GROUNDING=false
 MACRO_REFRESH_MINUTES=180
+MACRO_FEED_MAX_AGE_DAYS=14
 ```
 
-Run `php artisan macro:refresh`. Grounding availability and billing depend on the Gemini project. Invalid, uncited, unsafe, or malformed results are rejected; the previous valid brief is retained as stale.
+Run `php artisan macro:refresh`. HorizonBias retrieves bounded recent evidence from the Federal Reserve monetary-policy feed, Federal Reserve speeches and testimony feed, and U.S. Bureau of Economic Analysis feed. Gemini analyzes that catalogue but may return only server-issued citation IDs. The application then hydrates the official headline, publication timestamp, source name, and allow-listed HTTPS URL; Gemini-generated URLs are never accepted. One unavailable feed does not prevent the remaining official sources from being used.
+
+The default maximum evidence age is 14 days because major policy and economic releases are not necessarily published every day. If no recent relevant evidence exists, the brief remains technical-only and its event list is empty. Invalid or malformed AI results are rejected, and the previous valid brief is retained as stale.
 
 ## Scheduler deployment
 

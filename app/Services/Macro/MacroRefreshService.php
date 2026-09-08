@@ -13,7 +13,7 @@ final class MacroRefreshService
 
     public function refresh(): MacroBrief
     {
-        $context = BiasSnapshot::query()->latest('generated_at')->get()->unique('timeframe')
+        $context = BiasSnapshot::query()->where('symbol', config('horizon.symbol'))->latest('generated_at')->get()->unique('timeframe')
             ->map(fn (BiasSnapshot $snapshot) => ['timeframe' => $snapshot->timeframe, 'score' => $snapshot->score, 'label' => $snapshot->label, 'as_of' => $snapshot->data_as_of?->toIso8601String()])
             ->values()->all();
 
