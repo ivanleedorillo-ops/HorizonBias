@@ -121,4 +121,43 @@ class DashboardTest extends TestCase
     {
         $this->assertFileExists(public_path('images/horizonbias-logo.png'));
     }
+
+    #[Test]
+    public function theme_toggle_markup_and_anti_flash_script_are_present_on_both_pages(): void
+    {
+        $landing = $this->get('/');
+        $landing->assertOk()
+            ->assertSee('theme-toggle-btn', false)
+            ->assertSee('toggleTheme()', false)
+            ->assertSee("localStorage.getItem('horizon_theme')", false);
+
+        $dashboard = $this->get('/dashboard');
+        $dashboard->assertOk()
+            ->assertSee('theme-toggle-btn', false)
+            ->assertSee('toggleTheme()', false)
+            ->assertSee("localStorage.getItem('horizon_theme')", false);
+    }
+
+    #[Test]
+    public function tradingview_widget_embed_symbol_and_attribution_are_present(): void
+    {
+        $dashboard = $this->get('/dashboard');
+        $dashboard->assertOk()
+            ->assertSee('tradingview-widget-container', false)
+            ->assertSee('OANDA:XAUUSD', false)
+            ->assertSee('https://www.tradingview.com/symbols/XAUUSD/', false)
+            ->assertSee('provided by TradingView', false);
+    }
+
+    #[Test]
+    public function mandatory_educational_disclaimer_is_present_on_both_pages(): void
+    {
+        $disclaimer = 'HorizonBias provides educational market context and technical bias only. It is not financial advice, a trading signal, or a recommendation to buy or sell.';
+
+        $landing = $this->get('/');
+        $landing->assertOk()->assertSee($disclaimer, false);
+
+        $dashboard = $this->get('/dashboard');
+        $dashboard->assertOk()->assertSee($disclaimer, false);
+    }
 }

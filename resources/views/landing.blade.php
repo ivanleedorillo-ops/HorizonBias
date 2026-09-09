@@ -1,171 +1,188 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth bg-[#07090d]">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="HorizonBias provides auditable multi-timeframe technical bias and macroeconomic context dedicated exclusively to XAU/USD spot gold.">
     <link rel="icon" type="image/png" href="{{ asset('images/horizonbias-logo.png') }}">
     <title>HorizonBias — Multi-Timeframe XAU/USD Market Context</title>
+    <script>
+        (function() {
+            try {
+                var stored = localStorage.getItem('horizon_theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var theme = stored ? stored : (prefersDark ? 'dark' : 'light');
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.style.colorScheme = 'dark';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.style.colorScheme = 'light';
+                }
+            } catch (e) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body x-data="horizonLanding" class="min-h-screen w-full max-w-full overflow-x-hidden bg-[#07090d] text-slate-100 antialiased selection:bg-amber-300/30 selection:text-amber-100">
-    <!-- Ambient gold glow backgrounds -->
-    <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 overflow-hidden max-w-full">
-        <div class="absolute -top-40 left-1/2 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-amber-400/[0.04] blur-[120px]"></div>
-        <div class="absolute top-1/3 right-0 h-[28rem] w-[28rem] rounded-full bg-amber-300/[0.02] blur-[140px]"></div>
-        <div class="absolute bottom-1/4 left-0 h-[24rem] w-[24rem] rounded-full bg-emerald-400/[0.015] blur-[130px]"></div>
-    </div>
-
-    <!-- Header Navigation -->
-    <header class="sticky top-0 z-50 border-b border-white/[0.07] bg-[#07090d]/90 backdrop-blur-xl transition-all">
-        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
+<body x-data="horizonLanding" class="min-h-screen w-full max-w-full overflow-x-hidden antialiased">
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-bg-surface-translucent)] backdrop-blur-xl transition-colors">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
             <!-- Brand Logo -->
-            <a href="{{ url('/') }}" class="group flex items-center gap-2.5 sm:gap-3" aria-label="HorizonBias home">
-                <span class="relative grid h-9 w-9 sm:h-10 sm:w-10 place-items-center overflow-hidden rounded-xl border border-amber-300/30 bg-gradient-to-b from-amber-300/10 to-transparent p-1 transition-all duration-300 group-hover:border-amber-300/50 group-hover:shadow-[0_0_12px_rgba(251,191,36,0.25)] shrink-0">
+            <a href="{{ url('/') }}" class="group flex items-center gap-3" aria-label="HorizonBias home">
+                <span class="relative grid h-10 w-10 place-items-center overflow-hidden rounded-xl border border-[var(--color-gold-border)] bg-[var(--color-gold-bg)] p-1 transition-all duration-300 group-hover:scale-105 shrink-0">
                     <img src="{{ asset('images/horizonbias-logo.png') }}" alt="" class="h-full w-full object-contain" width="40" height="40" decoding="async">
                 </span>
                 <div>
-                    <span class="block text-sm sm:text-base font-semibold tracking-tight text-white leading-none">Horizon<span class="text-amber-300">Bias</span></span>
-                    <span class="hidden sm:block text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-slate-400 mt-1">XAU/USD Context</span>
+                    <span class="block text-base font-bold tracking-tight text-[var(--color-text-primary)] leading-none">Horizon<span class="text-[var(--color-gold-accent)]">Bias</span></span>
+                    <span class="hidden sm:block text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mt-1">XAU/USD Context</span>
                 </div>
             </a>
 
             <!-- Desktop Nav Links -->
-            <nav class="hidden md:flex items-center gap-8 text-sm" aria-label="Main Navigation">
-                <a href="#timeframes" class="text-slate-300 transition hover:text-amber-200">Timeframes</a>
-                <a href="#methodology" class="text-slate-300 transition hover:text-amber-200">Methodology</a>
-                <a href="#separation" class="text-slate-300 transition hover:text-amber-200">AI Separation</a>
-                <a href="#boundaries" class="text-slate-300 transition hover:text-amber-200">Boundaries</a>
-                <a href="#risk-notice" class="text-slate-400 transition hover:text-amber-200">Risk Notice</a>
+            <nav class="hidden md:flex items-center gap-8 text-sm font-medium" aria-label="Main Navigation">
+                <a href="#timeframes" class="text-[var(--color-text-secondary)] transition hover:text-[var(--color-gold-accent)]">Timeframes</a>
+                <a href="#methodology" class="text-[var(--color-text-secondary)] transition hover:text-[var(--color-gold-accent)]">Methodology</a>
+                <a href="#separation" class="text-[var(--color-text-secondary)] transition hover:text-[var(--color-gold-accent)]">AI Separation</a>
+                <a href="#boundaries" class="text-[var(--color-text-secondary)] transition hover:text-[var(--color-gold-accent)]">Boundaries</a>
             </nav>
 
             <!-- Actions -->
-            <div class="flex items-center gap-1.5 sm:gap-3">
-                <span class="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.02] px-3 py-1 text-xs text-slate-400">
-                    <span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span> Spot Gold Only
+            <div class="flex items-center gap-2 sm:gap-3">
+                <span class="hidden lg:inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 py-1 text-xs font-medium text-[var(--color-text-muted)]">
+                    <span class="status-dot text-[var(--color-gold-accent)]"></span> Spot Gold Only
                 </span>
-                <a href="{{ route('dashboard') }}" class="btn-gold !px-2.5 !py-1 text-xs sm:!px-5 sm:!py-2.5 sm:text-sm shrink-0" id="header-cta">
-                    <span class="hidden sm:inline">Open </span><span>Dashboard</span>
-                    <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+
+                <!-- Theme Toggle Button -->
+                <button type="button"
+                        @click="toggleTheme()"
+                        class="theme-toggle-btn"
+                        :aria-label="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+                        :title="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+                    <!-- Sun icon shown in dark theme -->
+                    <svg x-show="theme === 'dark'" x-cloak class="h-4 w-4 text-[var(--color-gold-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <!-- Moon icon shown in light theme -->
+                    <svg x-show="theme === 'light'" x-cloak class="h-4 w-4 text-[var(--color-text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+
+                <a href="{{ route('dashboard') }}" class="btn-gold px-4 py-2 text-sm sm:px-5 sm:py-2.5" id="header-cta">
+                    <span>Open Dashboard</span>
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                 </a>
 
                 <!-- Mobile menu toggle -->
-                <button type="button" @click="toggleMobileMenu()" class="md:hidden inline-flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.05] focus:outline-none shrink-0" :aria-expanded="mobileMenuOpen" aria-label="Toggle navigation menu">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path x-show="mobileMenuOpen" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button type="button" @click="toggleMobileMenu()" class="md:hidden inline-flex items-center justify-center p-2 rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]" :aria-expanded="mobileMenuOpen" aria-label="Toggle navigation menu">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                        <path x-show="mobileMenuOpen" x-cloak stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
         </div>
 
         <!-- Mobile Navigation Drawer -->
-        <div x-show="mobileMenuOpen" x-cloak class="md:hidden border-b border-white/[0.08] bg-[#0d1118]/98 px-4 py-5 backdrop-blur-xl">
-            <nav class="flex flex-col gap-3 text-sm" aria-label="Mobile Navigation">
-                <a href="#timeframes" @click="closeMobileMenu()" class="rounded-lg px-3 py-2 text-slate-200 hover:bg-white/[0.04]">7-Timeframe Matrix</a>
-                <a href="#methodology" @click="closeMobileMenu()" class="rounded-lg px-3 py-2 text-slate-200 hover:bg-white/[0.04]">Technical Methodology</a>
-                <a href="#separation" @click="closeMobileMenu()" class="rounded-lg px-3 py-2 text-slate-200 hover:bg-white/[0.04]">AI & Score Separation</a>
-                <a href="#boundaries" @click="closeMobileMenu()" class="rounded-lg px-3 py-2 text-slate-200 hover:bg-white/[0.04]">Product Boundaries</a>
-                <a href="#risk-notice" @click="closeMobileMenu()" class="rounded-lg px-3 py-2 text-amber-200/80 hover:bg-white/[0.04]">Risk Notice & Disclaimer</a>
-                <div class="mt-2 border-t border-white/[0.08] pt-3">
-                    <a href="{{ route('dashboard') }}" class="btn-gold w-full text-center">Open Dashboard</a>
+        <div x-show="mobileMenuOpen" x-cloak class="md:hidden border-b border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-5 shadow-lg">
+            <nav class="flex flex-col gap-3 text-sm font-medium" aria-label="Mobile Navigation">
+                <a href="#timeframes" @click="closeMobileMenu()" class="rounded-lg px-3 py-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-page-secondary)]">7-Timeframe Matrix</a>
+                <a href="#methodology" @click="closeMobileMenu()" class="rounded-lg px-3 py-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-page-secondary)]">Methodology</a>
+                <a href="#separation" @click="closeMobileMenu()" class="rounded-lg px-3 py-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-page-secondary)]">AI Separation</a>
+                <a href="#boundaries" @click="closeMobileMenu()" class="rounded-lg px-3 py-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-page-secondary)]">Boundaries</a>
+                <div class="mt-2 border-t border-[var(--color-border)] pt-3 flex flex-col gap-3">
+                    <button type="button" @click="toggleTheme()" class="btn-ghost w-full justify-center">
+                        <span x-text="theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'"></span>
+                    </button>
+                    <a href="{{ route('dashboard') }}" class="btn-gold w-full text-center py-2.5">Open Dashboard</a>
                 </div>
             </nav>
         </div>
     </header>
 
-    <main class="space-y-24 sm:space-y-32">
-        <!-- Hero Section -->
-        <section class="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 lg:pt-28 lg:pb-32">
+    <main class="space-y-20 sm:space-y-28">
+        <!-- 1. Hero Section -->
+        <section class="relative pt-12 pb-8 sm:pt-16 sm:pb-12 lg:pt-24 lg:pb-20">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+                <div class="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
                     <div class="space-y-6 text-left">
-                        <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/[0.06] px-3.5 py-1.5 text-xs font-medium text-amber-200">
-                            <span class="status-dot text-amber-300"></span>
+                        <div class="inline-flex items-center gap-2 rounded-full border border-[var(--color-gold-border)] bg-[var(--color-gold-bg)] px-3.5 py-1.5 text-xs font-semibold text-[var(--color-gold-accent)]">
+                            <span class="status-dot"></span>
                             <span>Dedicated XAU/USD Decision Support</span>
                         </div>
-                        <h1 class="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-snug sm:leading-tight">
-                            Multi-Timeframe<br class="sm:hidden">
-                            <span class="gold-gradient-text">Technical Bias</span><br class="sm:hidden">
-                            for Spot Gold.
+                        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-tight">
+                            Multi-Timeframe <br>
+                            <span class="gold-gradient-text">Technical Bias</span> for Spot Gold.
                         </h1>
-                        <p class="max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
-                            HorizonBias synthesizes completed candle market structure across seven horizons into a transparent, deterministic score. Objective technical conditions without noise, predictions, or black boxes.
+                        <p class="max-w-2xl text-base sm:text-lg leading-relaxed text-[var(--color-text-secondary)]" style="max-width: 65ch;">
+                            HorizonBias synthesizes closed-candle market structure across seven horizons into an auditable, deterministic score. Objective technical analysis without noise, prediction algorithms, or black boxes.
                         </p>
 
-                        <!-- Honesty boundary badge -->
-                        <div class="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 text-xs leading-relaxed text-slate-400">
-                            <strong class="font-medium text-amber-200">Transparent Context, Never Trade Signals:</strong>
-                            HorizonBias computes directional alignment from closed candles. We provide objective market structure and technical conditions—never trade triggers, price targets, or execution parameters.
-                        </div>
-
                         <!-- CTA Group -->
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-2">
-                            <a href="{{ route('dashboard') }}" class="btn-gold text-sm sm:text-base px-5 sm:px-6 py-2.5 sm:py-3 w-full sm:w-auto text-center" id="hero-primary-cta">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-1">
+                            <a href="{{ route('dashboard') }}" class="btn-gold text-base px-6 py-3 text-center" id="hero-primary-cta">
                                 <span>Open Live Dashboard</span>
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
                             </a>
-                            <a href="#methodology" class="btn-ghost text-sm sm:text-base px-5 sm:px-6 py-2.5 sm:py-3 w-full sm:w-auto text-center">
-                                <span>Explore Methodology</span>
+                            <a href="#methodology" class="btn-ghost text-base px-6 py-3 text-center">
+                                <span>How It Works</span>
                             </a>
                         </div>
 
-                        <!-- Key Pillars Micro-strip -->
-                        <div class="grid grid-cols-3 gap-2 sm:gap-3 border-t border-white/[0.08] pt-5 text-xs text-slate-400">
+                        <!-- 3 Compact Trust Indicators -->
+                        <div class="grid grid-cols-3 gap-3 border-t border-[var(--color-border)] pt-5">
                             <div>
-                                <span class="block font-semibold text-slate-200 text-[0.75rem] sm:text-xs">7 Horizons</span>
-                                <span class="text-[0.65rem] sm:text-[0.7rem] text-slate-400">5m to 1mo</span>
+                                <span class="block font-bold text-sm text-[var(--color-text-primary)]">7 Horizons</span>
+                                <span class="text-xs text-[var(--color-text-muted)]">5m to 1mo structure</span>
                             </div>
                             <div>
-                                <span class="block font-semibold text-slate-200 text-[0.75rem] sm:text-xs">Deterministic</span>
-                                <span class="text-[0.65rem] sm:text-[0.7rem] text-slate-400">100% auditable</span>
+                                <span class="block font-bold text-sm text-[var(--color-text-primary)]">Deterministic</span>
+                                <span class="text-xs text-[var(--color-text-muted)]">Closed-bar math</span>
                             </div>
                             <div>
-                                <span class="block font-semibold text-slate-200 text-[0.75rem] sm:text-xs">AI Separation</span>
-                                <span class="text-[0.65rem] sm:text-[0.7rem] text-slate-400">Isolated context</span>
+                                <span class="block font-bold text-sm text-[var(--color-text-primary)]">Isolated AI</span>
+                                <span class="text-xs text-[var(--color-text-muted)]">Non-interfering context</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Hero Visual Card -->
                     <div class="relative">
-                        <div class="panel-glow group overflow-hidden rounded-3xl border border-amber-300/30">
-                            <!-- Background artwork -->
-                            <div class="relative aspect-[16/10] w-full overflow-hidden bg-[#0d1118]">
-                                <img src="{{ asset('images/gold-horizon-hero.jpg') }}" alt="" class="h-full w-full object-cover object-center opacity-85 transition-transform duration-700 group-hover:scale-105" loading="eager" decoding="async">
-                                <div class="absolute inset-0 bg-gradient-to-t from-[#0d1118] via-[#0d1118]/40 to-transparent"></div>
+                        <div class="panel-glow overflow-hidden">
+                            <div class="relative aspect-[16/10] w-full overflow-hidden bg-[var(--color-bg-surface-elevated)]">
+                                <img src="{{ asset('images/gold-horizon-hero.jpg') }}" alt="" class="h-full w-full object-cover object-center opacity-90 transition-transform duration-500 hover:scale-105" loading="eager" decoding="async">
+                                <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-surface)] via-transparent to-transparent opacity-80"></div>
                             </div>
-
-                            <!-- Overlay Content on Hero Card -->
-                            <div class="relative -mt-16 p-6 space-y-4">
+                            <div class="p-6 space-y-4">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
-                                        <span class="status-dot text-emerald-400"></span>
-                                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-300">Composite Bias System</span>
+                                        <span class="status-dot text-[var(--color-bullish-text)]"></span>
+                                        <span class="text-xs font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Composite Bias System</span>
                                     </div>
-                                    <span class="rounded-lg border border-amber-300/20 bg-amber-300/10 px-2.5 py-1 text-[0.68rem] font-semibold text-amber-200">Illustrative Preview</span>
+                                    <span class="rounded-lg border border-[var(--color-gold-border)] bg-[var(--color-gold-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--color-gold-accent)]">Illustrative Preview</span>
                                 </div>
-
                                 <div class="grid grid-cols-2 gap-3">
-                                    <div class="rounded-xl border border-white/[0.06] bg-[#07090d]/80 p-3.5 backdrop-blur-md">
-                                        <span class="block text-[0.65rem] uppercase tracking-wider text-slate-400">Target Asset</span>
-                                        <span class="mt-1 block text-lg font-semibold text-white">XAU / USD</span>
-                                        <span class="text-xs text-slate-400">OANDA Spot Gold</span>
+                                    <div class="panel-subtle p-3.5">
+                                        <span class="block text-xs uppercase tracking-wider text-[var(--color-text-muted)]">Asset</span>
+                                        <strong class="mt-1 block text-lg font-bold text-[var(--color-text-primary)]">XAU / USD</strong>
+                                        <span class="text-xs text-[var(--color-text-muted)]">OANDA Spot Gold</span>
                                     </div>
-                                    <div class="rounded-xl border border-white/[0.06] bg-[#07090d]/80 p-3.5 backdrop-blur-md">
-                                        <span class="block text-[0.65rem] uppercase tracking-wider text-slate-400">Horizon Alignment</span>
-                                        <span class="mt-1 block text-lg font-semibold text-emerald-300">+45 Bullish</span>
-                                        <span class="text-xs text-slate-400">Weighted Consensus</span>
+                                    <div class="panel-subtle p-3.5">
+                                        <span class="block text-xs uppercase tracking-wider text-[var(--color-text-muted)]">Agreement</span>
+                                        <strong class="mt-1 block text-lg font-bold text-[var(--color-bullish-text)]">+45 Bullish</strong>
+                                        <span class="text-xs text-[var(--color-text-muted)]">Multi-Horizon</span>
                                     </div>
                                 </div>
-
-                                <div class="rounded-xl border border-white/[0.06] bg-[#07090d]/60 p-3 text-xs text-slate-400">
-                                    <span class="text-amber-200/90 font-medium">Completed Candles Only:</span> Every calculation waits for the bar to close, preventing repaint artifacts.
-                                </div>
+                                <p class="text-xs text-[var(--color-text-muted)]">
+                                    <strong class="text-[var(--color-text-secondary)]">Zero Repaint:</strong> Every calculation strictly requires closed candles before computing.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -173,23 +190,20 @@
             </div>
         </section>
 
-        <!-- Seven-Timeframe Preview Section -->
+        <!-- 2. Seven-Timeframe Capability Overview -->
         <section id="timeframes" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 scroll-mt-24">
-            <div class="text-center max-w-3xl mx-auto space-y-4">
-                <p class="eyebrow text-amber-300/90">Multi-Timeframe Architecture</p>
-                <h2 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <div class="text-center max-w-3xl mx-auto space-y-3">
+                <p class="eyebrow">Multi-Timeframe Architecture</p>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[var(--color-text-primary)]">
                     Seven Horizons. One Structured View.
                 </h2>
-                <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-                    Single-timeframe analysis suffers from tunnel vision. HorizonBias calculates directional alignment across tactical, intermediate, and structural horizons with mathematically defined weights.
+                <p class="text-[var(--color-text-secondary)] text-base leading-relaxed">
+                    Single-timeframe analysis creates blind spots. HorizonBias evaluates completed candles across tactical, intermediate, and structural horizons with mathematically defined weights.
                 </p>
-                <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-slate-400">
-                    <span class="text-amber-300">ℹ</span> Scores shown below are illustrative representations of the UI structure
-                </div>
             </div>
 
             <!-- 7-Timeframe Grid -->
-            <div class="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+            <div class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                 @php
                     $illustrativeCards = [
                         ['key' => '5m', 'label' => '5 Minutes', 'score' => '+20', 'bias' => 'Bullish', 'weight' => '5%', 'role' => 'Micro execution flow'],
@@ -203,25 +217,25 @@
                 @endphp
 
                 @foreach($illustrativeCards as $card)
-                    <div class="panel-interactive flex flex-col justify-between p-4 {{ $card['key'] === '4h' ? 'ring-1 ring-amber-300/40 bg-[#121620]' : '' }}">
+                    <div class="panel-interactive flex flex-col justify-between p-4 {{ $card['key'] === '4h' ? 'ring-2 ring-[var(--color-gold-accent)]' : '' }}">
                         <div>
                             <div class="flex items-center justify-between">
-                                <span class="text-sm font-bold text-white tracking-tight">{{ $card['key'] }}</span>
-                                <span class="rounded bg-white/[0.05] px-1.5 py-0.5 text-[0.62rem] font-medium text-slate-400">Wt. {{ $card['weight'] }}</span>
+                                <span class="text-base font-bold text-[var(--color-text-primary)]">{{ $card['key'] }}</span>
+                                <span class="rounded bg-[var(--color-bg-page-secondary)] px-2 py-0.5 text-xs font-semibold text-[var(--color-text-muted)]">{{ $card['weight'] }}</span>
                             </div>
-                            <span class="mt-1 block text-[0.68rem] text-slate-400">{{ $card['label'] }}</span>
+                            <span class="mt-0.5 block text-xs text-[var(--color-text-muted)]">{{ $card['label'] }}</span>
                         </div>
 
                         <div class="my-4">
-                            <span class="text-2xl font-bold tabular-nums {{ str_contains($card['bias'], 'Bullish') ? 'text-emerald-300' : (str_contains($card['bias'], 'Bearish') ? 'text-rose-300' : 'text-amber-200') }}">
+                            <span class="text-2xl font-extrabold tabular-nums {{ str_contains($card['bias'], 'Bullish') ? 'text-[var(--color-bullish-text)]' : (str_contains($card['bias'], 'Bearish') ? 'text-[var(--color-bearish-text)]' : 'text-[var(--color-neutral-text)]') }}">
                                 {{ $card['score'] }}
                             </span>
-                            <span class="mt-1 block text-xs font-semibold {{ str_contains($card['bias'], 'Bullish') ? 'text-emerald-400' : (str_contains($card['bias'], 'Bearish') ? 'text-rose-400' : 'text-amber-300') }}">
+                            <span class="mt-1 block text-xs font-bold {{ str_contains($card['bias'], 'Bullish') ? 'text-[var(--color-bullish-text)]' : (str_contains($card['bias'], 'Bearish') ? 'text-[var(--color-bearish-text)]' : 'text-[var(--color-neutral-text)]') }}">
                                 {{ $card['bias'] }}
                             </span>
                         </div>
 
-                        <p class="border-t border-white/[0.06] pt-2 text-[0.68rem] leading-4 text-slate-400">
+                        <p class="border-t border-[var(--color-border-subtle)] pt-2 text-xs text-[var(--color-text-muted)] leading-tight">
                             {{ $card['role'] }}
                         </p>
                     </div>
@@ -229,257 +243,164 @@
             </div>
         </section>
 
-        <!-- Technical Methodology Section -->
+        <!-- 3. Methodology & Architectural Separation -->
         <section id="methodology" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 scroll-mt-24">
-            <div class="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+            <div class="grid gap-12 lg:grid-cols-2 lg:items-center">
+                <!-- Four Deterministic Pillars -->
                 <div class="space-y-5">
-                    <p class="eyebrow text-amber-300/90">Four-Pillar Deterministic Model</p>
-                    <h2 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                        How Technical Bias Is Calculated.
+                    <p class="eyebrow">Deterministic Technical Model</p>
+                    <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
+                        Four Pillars. Closed-Bar Mathematics.
                     </h2>
-                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-                        Rather than relying on uninterpretable neural networks or black-box algorithms, HorizonBias utilizes four classic, audited technical pillars evaluated strictly against completed candles.
+                    <p class="text-[var(--color-text-secondary)] text-base leading-relaxed">
+                        Rather than uninterpretable neural networks, HorizonBias calculates directional alignment using four classic, audited technical pillars evaluated continuously from -100 to +100:
                     </p>
-                    <div class="space-y-3 pt-2">
-                        <div class="flex items-start gap-3">
-                            <span class="mt-1 h-2 w-2 rounded-full bg-amber-400 shrink-0"></span>
-                            <p class="text-xs text-slate-300"><strong class="text-white">Strict Completed Candle Logic:</strong> Calculations never alter after a candle closes. Real-time tick fluctuations do not skew historical scores.</p>
+
+                    <div class="grid gap-3 sm:grid-cols-2 pt-2">
+                        <div class="panel-subtle p-4 space-y-1.5">
+                            <div class="flex items-center justify-between text-xs font-bold text-[var(--color-gold-accent)]">
+                                <span>PILLAR 1</span>
+                                <span>35 pts</span>
+                            </div>
+                            <h3 class="text-sm font-bold text-[var(--color-text-primary)]">Trend Alignment</h3>
+                            <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">EMA 20, 50, and 200 stack order and price relation across timeframes.</p>
                         </div>
-                        <div class="flex items-start gap-3">
-                            <span class="mt-1 h-2 w-2 rounded-full bg-amber-400 shrink-0"></span>
-                            <p class="text-xs text-slate-300"><strong class="text-white">Continuous Normalization:</strong> Scores range from -100 (Maximum Bearish Agreement) to +100 (Maximum Bullish Agreement).</p>
+
+                        <div class="panel-subtle p-4 space-y-1.5">
+                            <div class="flex items-center justify-between text-xs font-bold text-[var(--color-gold-accent)]">
+                                <span>PILLAR 2</span>
+                                <span>25 pts</span>
+                            </div>
+                            <h3 class="text-sm font-bold text-[var(--color-text-primary)]">Momentum Strength</h3>
+                            <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">Wilder-smoothed RSI (14), MACD histogram trajectory, and 10-bar ROC.</p>
+                        </div>
+
+                        <div class="panel-subtle p-4 space-y-1.5">
+                            <div class="flex items-center justify-between text-xs font-bold text-[var(--color-gold-accent)]">
+                                <span>PILLAR 3</span>
+                                <span>25 pts</span>
+                            </div>
+                            <h3 class="text-sm font-bold text-[var(--color-text-primary)]">Market Structure</h3>
+                            <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">Confirmed 5-candle swing pivots identify structural higher-highs or lower-lows.</p>
+                        </div>
+
+                        <div class="panel-subtle p-4 space-y-1.5">
+                            <div class="flex items-center justify-between text-xs font-bold text-[var(--color-gold-accent)]">
+                                <span>PILLAR 4</span>
+                                <span>15 pts</span>
+                            </div>
+                            <h3 class="text-sm font-bold text-[var(--color-text-primary)]">Breakouts & Volatility</h3>
+                            <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">20-bar Donchian channel breakouts validated by ATR (14) and ADX (14).</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <!-- Pillar 1 -->
-                    <div class="panel p-5 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold uppercase tracking-wider text-amber-300">Pillar 1</span>
-                            <span class="text-[0.68rem] text-slate-400">Up to 35 pts</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-white">Trend Alignment</h3>
-                        <p class="text-xs leading-relaxed text-slate-300">
-                            Exponential Moving Averages (EMA 20, 50, 200) stacked in order. Price relation to key dynamic averages determines base regime strength.
-                        </p>
+                <!-- AI Separation Card -->
+                <div id="separation" class="panel p-6 sm:p-8 space-y-5 scroll-mt-24">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-[var(--color-bullish-border)] bg-[var(--color-bullish-bg)] px-3 py-1 text-xs font-bold text-[var(--color-bullish-text)]">
+                        <span>Architectural Boundary</span>
                     </div>
+                    <h2 class="text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
+                        Why AI Context Never Touches the Score.
+                    </h2>
+                    <p class="text-sm sm:text-base leading-relaxed text-[var(--color-text-secondary)]">
+                        HorizonBias incorporates dual-AI market intelligence (Gemini and Groq GPT-OSS) grounded in verified official feeds. However, by architectural mandate:
+                    </p>
 
-                    <!-- Pillar 2 -->
-                    <div class="panel p-5 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold uppercase tracking-wider text-amber-300">Pillar 2</span>
-                            <span class="text-[0.68rem] text-slate-400">Up to 25 pts</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-white">Momentum Strength</h3>
-                        <p class="text-xs leading-relaxed text-slate-300">
-                            Wilder-smoothed RSI (14 period), MACD histogram trajectory, and 10-period Rate of Change (ROC) identify expansion and exhaustion.
-                        </p>
-                    </div>
-
-                    <!-- Pillar 3 -->
-                    <div class="panel p-5 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold uppercase tracking-wider text-amber-300">Pillar 3</span>
-                            <span class="text-[0.68rem] text-slate-400">Up to 25 pts</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-white">Market Structure</h3>
-                        <p class="text-xs leading-relaxed text-slate-300">
-                            Rigorous five-candle confirmed swing pivots identify structural higher-highs or lower-lows without lookahead bias or repainting.
-                        </p>
-                    </div>
-
-                    <!-- Pillar 4 -->
-                    <div class="panel p-5 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold uppercase tracking-wider text-amber-300">Pillar 4</span>
-                            <span class="text-[0.68rem] text-slate-400">Up to 15 pts</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-white">Breakouts & Volatility</h3>
-                        <p class="text-xs leading-relaxed text-slate-300">
-                            20-candle Donchian channel breakouts corroborated by Average True Range (ATR 14) and Average Directional Index (ADX 14).
-                        </p>
-                    </div>
+                    <ul class="space-y-3 text-sm text-[var(--color-text-secondary)]">
+                        <li class="flex items-start gap-3">
+                            <span class="text-[var(--color-gold-accent)] font-bold">✓</span>
+                            <span><strong class="text-[var(--color-text-primary)]">Zero Model Drift:</strong> The technical score is 100% deterministic and cannot be diluted by AI hallucinations.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-[var(--color-gold-accent)] font-bold">✓</span>
+                            <span><strong class="text-[var(--color-text-primary)]">Verifiable Citations:</strong> Macro events link out to official releases (Federal Reserve, BLS, Treasury).</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-[var(--color-gold-accent)] font-bold">✓</span>
+                            <span><strong class="text-[var(--color-text-primary)]">Dual Perspective:</strong> Compare the hard math against macroeconomic forces without confusing the two.</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </section>
 
-        <!-- Technical and Macro Separation Section -->
-        <section id="separation" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 scroll-mt-24">
-            <div class="panel-glow p-8 sm:p-12">
-                <div class="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-                    <div class="space-y-4">
-                        <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-semibold text-amber-200">
-                            Independent Architectural Boundary
-                        </span>
-                        <h2 class="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                            Why AI Macro Context Never Touches the Technical Score.
-                        </h2>
-                        <p class="text-slate-300 text-sm leading-relaxed">
-                            HorizonBias incorporates macroeconomic intelligence powered by Google Gemini with verified search grounding. However, by architectural mandate:
-                        </p>
-                        <ul class="space-y-2 text-xs sm:text-sm text-slate-300">
-                            <li class="flex items-start gap-2">
-                                <span class="text-amber-300 font-bold">✓</span>
-                                <span><strong class="text-white">Zero Model Drift:</strong> The quantitative technical score is 100% deterministic and cannot be diluted or hallucinated by generative AI.</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="text-amber-300 font-bold">✓</span>
-                                <span><strong class="text-white">Sourced Event Citations:</strong> Macro summaries cite verifiable financial publications with outbound source links.</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="text-amber-300 font-bold">✓</span>
-                                <span><strong class="text-white">Dual Perspective:</strong> Compare the hard chart math against prevailing central bank policy and geopolitical headlines side by side.</span>
-                            </li>
-                        </ul>
-                    </div>
+        <!-- 4. Product Boundaries, Risk Notice & Final CTA -->
+        <section id="boundaries" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 scroll-mt-24 space-y-12">
+            <!-- Boundaries -->
+            <div class="panel p-6 sm:p-10">
+                <div class="max-w-2xl space-y-2">
+                    <p class="eyebrow text-[var(--color-bearish-text)]">Strict Product Boundaries</p>
+                    <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
+                        What HorizonBias Is Not.
+                    </h2>
+                    <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                        To maintain analytical integrity and regulatory compliance, HorizonBias enforces strict boundaries:
+                    </p>
+                </div>
 
-                    <div class="rounded-2xl border border-white/[0.08] bg-[#07090d]/90 p-6 space-y-4">
-                        <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
-                            <span class="text-xs uppercase tracking-wider text-slate-400">Architectural Isolation</span>
-                            <span class="text-xs font-semibold text-emerald-400">Enforced</span>
-                        </div>
-                        <div class="space-y-3 text-xs">
-                            <div class="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.05] p-3">
-                                <span class="font-semibold text-emerald-300 block">Technical Score Engine</span>
-                                <span class="text-slate-400 text-[0.7rem]">Pure PHP/Math · Twelve Data OHLCV · Immutable Rules</span>
-                            </div>
-                            <div class="flex justify-center text-slate-600 font-mono text-xs">↕ Isolated ↕</div>
-                            <div class="rounded-xl border border-amber-300/20 bg-amber-300/[0.05] p-3">
-                                <span class="font-semibold text-amber-200 block">AI Macro Context Engine</span>
-                                <span class="text-slate-400 text-[0.7rem]">Gemini Flash · Search Grounding · Qualitative Notes</span>
-                            </div>
-                        </div>
+                <div class="mt-6 grid gap-4 sm:grid-cols-3">
+                    <div class="panel-subtle p-4 space-y-1.5">
+                        <span class="font-bold text-sm text-[var(--color-bearish-text)]">✕ No Order Execution</span>
+                        <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">No broker accounts, wallets, or trading commands. We do not execute trades.</p>
+                    </div>
+                    <div class="panel-subtle p-4 space-y-1.5">
+                        <span class="font-bold text-sm text-[var(--color-bearish-text)]">✕ No Price Targets</span>
+                        <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">Never publishes buy/sell signals, price predictions, or risk-per-trade recommendations.</p>
+                    </div>
+                    <div class="panel-subtle p-4 space-y-1.5">
+                        <span class="font-bold text-sm text-[var(--color-bearish-text)]">✕ No Paywalls or Tracking</span>
+                        <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">No logins, subscription walls, or invasive user tracking. Clean public access.</p>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Transparency & Reliability Section -->
-        <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto space-y-4">
-                <p class="eyebrow text-amber-300/90">Enterprise-Grade Reliability</p>
-                <h2 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                    Transparency at Every Layer.
-                </h2>
-                <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-                    Financial analytics software must communicate its status truthfully—especially when network conditions or market data feeds degrade.
+            <!-- Mandatory Educational Disclaimer -->
+            <div id="risk-notice" class="rounded-2xl border border-[var(--color-gold-border)] bg-[var(--color-gold-bg)] p-6 sm:p-8">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-sm font-bold text-[var(--color-gold-accent)]">⚠️ Educational Market Context Only</span>
+                </div>
+                <h3 class="text-base font-bold text-[var(--color-text-primary)]">Context, Never a Command</h3>
+                <p class="mt-2 text-xs sm:text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                    HorizonBias provides educational market context and technical bias only. It is not financial advice, a trading signal, or a recommendation to buy or sell. Market and AI-generated information may be delayed, incomplete, or inaccurate. Independently verify all information and make your own risk decisions.
                 </p>
             </div>
 
-            <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="panel p-6 space-y-3">
-                    <div class="h-8 w-8 rounded-xl border border-amber-300/30 bg-amber-300/10 grid place-items-center text-amber-300 font-bold text-sm">01</div>
-                    <h3 class="text-base font-semibold text-white">Stale-State Detection</h3>
-                    <p class="text-xs leading-relaxed text-slate-400">
-                        Every timeframe card monitors timestamp staleness based on its configured interval. If a feed halts, the UI labels the snapshot as stale immediately.
-                    </p>
-                </div>
-                <div class="panel p-6 space-y-3">
-                    <div class="h-8 w-8 rounded-xl border border-amber-300/30 bg-amber-300/10 grid place-items-center text-amber-300 font-bold text-sm">02</div>
-                    <h3 class="text-base font-semibold text-white">Last-Known-Good State</h3>
-                    <p class="text-xs leading-relaxed text-slate-400">
-                        If an API request fails, the dashboard preserves the previous valid snapshot in memory and displays a persistent warning banner rather than crashing.
-                    </p>
-                </div>
-                <div class="panel p-6 space-y-3">
-                    <div class="h-8 w-8 rounded-xl border border-amber-300/30 bg-amber-300/10 grid place-items-center text-amber-300 font-bold text-sm">03</div>
-                    <h3 class="text-base font-semibold text-white">Explicit Demo Mode</h3>
-                    <p class="text-xs leading-relaxed text-slate-400">
-                        In environments without commercial display licenses, the system operates in explicit Demo Mode with clearly labeled illustrative fixtures.
-                    </p>
-                </div>
-                <div class="panel p-6 space-y-3">
-                    <div class="h-8 w-8 rounded-xl border border-amber-300/30 bg-amber-300/10 grid place-items-center text-amber-300 font-bold text-sm">04</div>
-                    <h3 class="text-base font-semibold text-white">Provider Agnostic</h3>
-                    <p class="text-xs leading-relaxed text-slate-400">
-                        Modular provider contracts allow Twelve Data or backup market vendors to swap without altering scoring mathematics or frontend displays.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Product Boundaries Section -->
-        <section id="boundaries" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 scroll-mt-24">
-            <div class="panel p-8 sm:p-12">
-                <div class="max-w-3xl space-y-4">
-                    <p class="eyebrow text-rose-400">Strict Product Boundary</p>
-                    <h2 class="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                        What HorizonBias Is <span class="text-rose-300">Not</span>.
-                    </h2>
-                    <p class="text-slate-300 text-sm leading-relaxed">
-                        To maintain compliance, user trust, and analytical integrity, HorizonBias enforces strict functional boundaries:
-                    </p>
-                </div>
-
-                <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2">
-                        <span class="text-rose-400 font-semibold text-sm">✕ No Order Execution</span>
-                        <p class="text-xs leading-relaxed text-slate-400">There are no broker API keys, wallet connections, or trading buttons. We do not execute trades.</p>
-                    </div>
-                    <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2">
-                        <span class="text-rose-400 font-semibold text-sm">✕ No Price Targets or Trade Parameters</span>
-                        <p class="text-xs leading-relaxed text-slate-400">We never publish price targets, risk-per-trade recommendations, or trade setup recommendations.</p>
-                    </div>
-                    <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2">
-                        <span class="text-rose-400 font-semibold text-sm">✕ No User Accounts</span>
-                        <p class="text-xs leading-relaxed text-slate-400">No login, registration, tracking cookies, or subscription paywalls. Completely accessible market context.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Final CTA Section -->
-        <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="panel-glow p-8 sm:p-14 text-center space-y-6">
-                <span class="status-dot text-amber-300"></span>
-                <h2 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                    Ready to Inspect XAU/USD Technical Structure?
+            <!-- Final CTA Card -->
+            <div class="panel-glow p-8 sm:p-12 text-center space-y-5">
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--color-text-primary)]">
+                    Ready to Inspect XAU/USD Market Structure?
                 </h2>
-                <p class="mx-auto max-w-xl text-slate-300 text-sm sm:text-base leading-relaxed">
-                    Access real-time timeframe scores, TradingView charts, and macroeconomic context in a single unified dashboard.
+                <p class="mx-auto max-w-xl text-sm sm:text-base text-[var(--color-text-secondary)] leading-relaxed">
+                    Access closed-bar timeframe scores, TradingView charts, and Dual-AI context in a unified decision-support dashboard.
                 </p>
                 <div class="pt-2">
                     <a href="{{ route('dashboard') }}" class="btn-gold text-base px-8 py-3.5" id="final-cta">
-                        <span>Open the XAU/USD Dashboard</span>
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        <span>Open Dashboard</span>
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
                     </a>
                 </div>
             </div>
         </section>
-
-        <!-- Mandatory Risk Notice & Disclaimer Section -->
-        <section id="risk-notice" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 scroll-mt-24">
-            <div class="rounded-2xl border border-amber-300/20 bg-amber-300/[0.035] p-6 sm:p-8">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="text-amber-300 text-sm font-semibold">⚠️ Legal & Risk Notice</span>
-                    <span class="text-xs uppercase tracking-wider text-slate-500">· Educational Disclaimer</span>
-                </div>
-                <h3 class="text-lg font-semibold text-amber-100">Context, Never a Command</h3>
-                <p class="mt-3 text-xs sm:text-sm leading-relaxed text-amber-100/70">
-                    HorizonBias provides educational market context and technical bias only. It is not financial advice, a trading signal, or a recommendation to buy or sell. Market and AI-generated information may be delayed, incomplete, or inaccurate. Independently verify all information and make your own risk decisions.
-                </p>
-            </div>
-        </section>
     </main>
 
     <!-- Footer -->
-    <footer class="mt-20 border-t border-white/[0.07] bg-[#07090d]/80 py-10 text-xs text-slate-400">
-        <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+    <footer class="mt-20 border-t border-[var(--color-border)] bg-[var(--color-bg-surface)] py-8 text-xs text-[var(--color-text-muted)] transition-colors">
+        <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <div class="space-y-1">
                 <div class="flex items-center gap-2">
                     <img src="{{ asset('images/horizonbias-logo.png') }}" alt="" class="h-5 w-5 object-contain" width="20" height="20">
-                    <strong class="font-semibold text-slate-200">HorizonBias</strong>
+                    <strong class="font-bold text-[var(--color-text-primary)]">HorizonBias</strong>
                     <span>· Dedicated to XAU/USD</span>
                 </div>
-                <p class="text-slate-400">UTC timestamps · Completed candle analysis · Zero execution</p>
+                <p>Closed bar calculations · UTC timestamps · Zero execution</p>
             </div>
-            <div class="flex flex-wrap items-center gap-6">
-                <a href="#methodology" class="hover:text-amber-200">Methodology</a>
-                <a href="#risk-notice" class="hover:text-amber-200">Risk Notice</a>
-                <a href="{{ route('dashboard') }}" class="font-semibold text-amber-300 hover:text-amber-200">Dashboard →</a>
+            <div class="flex flex-wrap items-center gap-6 font-medium">
+                <a href="#methodology" class="hover:text-[var(--color-gold-accent)]">Methodology</a>
+                <a href="#boundaries" class="hover:text-[var(--color-gold-accent)]">Boundaries</a>
+                <a href="{{ route('dashboard') }}" class="text-[var(--color-gold-accent)] font-semibold hover:underline">Open Dashboard →</a>
             </div>
         </div>
     </footer>
