@@ -185,4 +185,18 @@ class DashboardTest extends TestCase
         $this->getJson('/api/bias-history?range=forever')->assertUnprocessable();
         $this->postJson('/api/bias-history')->assertMethodNotAllowed();
     }
+
+    #[Test]
+    public function github_pages_overview_matches_the_current_history_and_dual_ai_release(): void
+    {
+        $page = file_get_contents(base_path('docs/index.html'));
+
+        $this->assertIsString($page);
+        $this->assertStringContainsString('Bias History &amp; Historical Alignment', $page);
+        $this->assertStringContainsString('Timeframe bias heatmap', $page);
+        $this->assertStringContainsString('20 mature samples required', $page);
+        $this->assertStringContainsString('Gemini and Groq', $page);
+        $this->assertStringContainsString('Historical alignment is not a profitability backtest', $page);
+        $this->assertStringNotContainsString('Cerebras', $page);
+    }
 }
