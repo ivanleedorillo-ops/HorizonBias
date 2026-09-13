@@ -25,6 +25,13 @@ class DashboardTest extends TestCase
             ->assertSee('HorizonBias')
             ->assertSee('Multi-Timeframe')
             ->assertSee('XAU/USD')
+            ->assertSee('Bias History &amp; Reliability', false)
+            ->assertSee('Timeframe Bias Heatmap')
+            ->assertSee('20+')
+            ->assertSee('ATR-adjusted')
+            ->assertSee('Gemini and Groq')
+            ->assertSee('HorizonBias gold horizon emblem')
+            ->assertDontSee('gold-horizon-hero.jpg', false)
             ->assertSee(route('dashboard'), false)
             ->assertSee('HorizonBias provides educational market context and technical bias only.', false);
     }
