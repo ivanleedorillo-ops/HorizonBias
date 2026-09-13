@@ -1,5 +1,6 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import Chart from 'chart.js/auto';
 
 window.Alpine = Alpine;
 
@@ -124,6 +125,14 @@ const horizonDashboard = () => {
         connectionIssue: false,
         refreshing: false,
         chartIssue: false,
+        history: null,
+        historyRange: '7d',
+        historyScope: 'overall',
+        historyLoading: false,
+        historyIssue: false,
+        historyRequest: 0,
+        historyChart: null,
+        showHistoryMethodology: false,
         timer: null,
         theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
         showEvidenceDetails: isDesktop,
@@ -137,10 +146,12 @@ const horizonDashboard = () => {
             this.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
             window.addEventListener('horizon-theme-changed', (e) => {
                 this.theme = e.detail.theme;
+                this.$nextTick(() => this.renderHistoryChart());
             });
 
             // Initialize TradingView chart with current active theme
             initTradingView(this.theme);
+            this.refreshHistory();
 
             this.timer = window.setInterval(() => this.refresh(), 60000);
             window.setTimeout(() => {
@@ -171,11 +182,82 @@ const horizonDashboard = () => {
                     this.selectedKey = this.data.timeframes?.[0]?.key ?? null;
                 }
                 this.connectionIssue = false;
+                await this.refreshHistory();
             } catch (_) {
                 this.connectionIssue = true;
             } finally {
                 this.refreshing = false;
             }
+        },
+        async refreshHistory() {
+            const requestId = ++this.historyRequest;
+            this.historyLoading = true;
+            try {
+                const params = new URLSearchParams({ range: this.historyRange, scope: this.historyScope });
+                const response = await fetch(`/api/bias-history?${params}`, { headers: { Accept: 'application/json' } });
+                if (!response.ok) throw new Error('History refresh failed');
+                const result = await response.json();
+                if (requestId !== this.historyRequest) return;
+                this.history = result;
+                this.historyIssue = false;
+                this.$nextTick(() => this.renderHistoryChart());
+            } catch (_) {
+                if (requestId === this.historyRequest) this.historyIssue = true;
+            } finally {
+                if (requestId === this.historyRequest) this.historyLoading = false;
+            }
+        },
+        selectHistoryRange(range) {
+            this.historyRange = range;
+            this.refreshHistory();
+        },
+        selectHistoryScope(scope) {
+            this.historyScope = scope;
+            this.refreshHistory();
+        },
+        renderHistoryChart() {
+            const canvas = document.getElementById('bias-history-chart');
+            if (!canvas || !this.history?.series) return;
+            if (this.historyChart) this.historyChart.destroy();
+
+            const styles = getComputedStyle(document.documentElement);
+            const textColor = styles.getPropertyValue('--color-text-muted').trim() || '#94a3b8';
+            const gridColor = styles.getPropertyValue('--color-border-subtle').trim() || '#253047';
+            const goldColor = styles.getPropertyValue('--color-gold-accent').trim() || '#d6ad45';
+            const labels = this.history.series.map(point => this.formatChartTime(point.at));
+            const scores = this.history.series.map(point => point.score);
+
+            this.historyChart = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: `${this.historyScope} bias score`,
+                        data: scores,
+                        borderColor: goldColor,
+                        backgroundColor: `${goldColor}24`,
+                        borderWidth: 2,
+                        pointRadius: scores.length > 80 ? 0 : 2,
+                        pointHoverRadius: 4,
+                        fill: true,
+                        tension: 0.2,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : { duration: 250 },
+                    interaction: { intersect: false, mode: 'index' },
+                    scales: {
+                        y: { min: -100, max: 100, ticks: { color: textColor }, grid: { color: gridColor } },
+                        x: { ticks: { color: textColor, maxTicksLimit: 7, maxRotation: 0 }, grid: { display: false } },
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: context => ` Score: ${context.parsed.y}` } },
+                    },
+                },
+            });
         },
         get selected() {
             return this.data.timeframes?.find(frame => frame.key === this.selectedKey) ?? null;
@@ -235,6 +317,19 @@ const horizonDashboard = () => {
                 timeZone: 'UTC',
                 hour12: false
             }).format(new Date(value)) + ' UTC';
+        },
+        formatChartTime(value) {
+            if (!value) return '';
+            return new Intl.DateTimeFormat('en-US', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                timeZone: 'UTC', hour12: false,
+            }).format(new Date(value));
+        },
+        formatDuration(minutes) {
+            if (minutes === null || minutes === undefined) return 'Awaiting data';
+            if (minutes < 60) return `${minutes}m`;
+            if (minutes < 1440) return `${Math.round(minutes / 60)}h`;
+            return `${Math.round(minutes / 1440)}d`;
         },
         humanize(value = '') {
             return String(value ?? '').replaceAll('_', ' ');

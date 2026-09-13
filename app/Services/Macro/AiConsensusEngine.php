@@ -27,6 +27,7 @@ final class AiConsensusEngine
             'provider_count' => count($ready),
             'summary' => $this->summary($ready, $agreement, $goldBias, $usdStrength),
             'events' => $events,
+            'historical_assessment' => $this->historicalAssessment($ready, $technicalContext['history'] ?? []),
             'limitations' => $this->limitations($ready, $evidence, $technicalContext),
         ];
     }
@@ -189,7 +190,56 @@ final class AiConsensusEngine
         if (! ($technicalContext['usd_proxy']['available'] ?? false)) {
             $limitations[] = 'No fresh direct USD-proxy technical snapshot was available; USD strength relies on verified macro evidence.';
         }
+        $historyQuality = $technicalContext['history']['overall']['sample_quality'] ?? 'insufficient';
+        if ($historyQuality === 'insufficient') {
+            $limitations[] = 'Historical alignment has not reached the minimum mature sample size.';
+        }
 
         return $limitations;
+    }
+
+    private function historicalAssessment(array $ready, array $history): array
+    {
+        $assessments = array_values(array_filter(array_map(
+            fn (array $analysis) => $analysis['historical_assessment'] ?? null,
+            $ready,
+        ), 'is_array'));
+        $sampleQuality = $history['overall']['sample_quality'] ?? 'insufficient';
+        $trends = array_column($assessments, 'alignment_trend');
+        $fits = array_column($assessments, 'regime_fit');
+        $trend = $this->sharedHistoricalValue($trends, 'unclear');
+        $regimeFit = $this->sharedHistoricalValue($fits, 'unclear');
+        $agreement = count($assessments) < 2
+            ? (count($assessments) === 1 ? 'single_model' : 'unavailable')
+            : (count(array_unique($trends)) === 1 && count(array_unique($fits)) === 1 ? 'agree' : 'disagree');
+        $caveats = collect($assessments)->flatMap(fn (array $assessment) => $assessment['caveats'] ?? [])
+            ->filter(fn ($caveat) => is_string($caveat))->unique()->take(6)->values()->all();
+
+        if ($sampleQuality === 'insufficient') {
+            $trend = 'unclear';
+            $regimeFit = 'unclear';
+            $caveats[] = 'The mature historical sample is too small for a reliability percentage.';
+        }
+
+        return [
+            'sample_quality' => $sampleQuality,
+            'alignment_trend' => $trend,
+            'regime_fit' => $regimeFit,
+            'agreement' => $agreement,
+            'summary' => $sampleQuality === 'insufficient'
+                ? 'Historical evidence is still accumulating; the two-model interpretation is provisional.'
+                : "The analysts describe historical alignment as {$trend} and the current regime fit as {$regimeFit}.",
+            'caveats' => array_values(array_unique($caveats)),
+        ];
+    }
+
+    private function sharedHistoricalValue(array $values, string $fallback): string
+    {
+        $values = array_values(array_filter($values, fn ($value) => is_string($value)));
+        if ($values === [] || count(array_unique($values)) !== 1) {
+            return $fallback;
+        }
+
+        return $values[0];
     }
 }

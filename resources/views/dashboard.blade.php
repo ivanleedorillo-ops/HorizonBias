@@ -235,6 +235,130 @@
             <p x-show="!data.timeframes?.length" class="panel p-6 text-sm text-[var(--color-text-muted)] text-center">Awaiting timeframe snapshot data from market provider.</p>
         </section>
 
+        <!-- Bias History & Reliability -->
+        <section class="panel p-5 sm:p-7 min-w-0" aria-labelledby="history-heading">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <p class="eyebrow text-[var(--color-gold-accent)]">Closed-Bar Audit Trail</p>
+                    <h2 id="history-heading" class="mt-1 text-lg sm:text-xl font-bold text-[var(--color-text-primary)]">Bias History &amp; Historical Alignment</h2>
+                    <p class="mt-1 max-w-2xl text-xs leading-relaxed text-[var(--color-text-muted)]">Tracks what HorizonBias reported at the time and compares mature observations with later ATR-normalized price direction. It is not a profitability test.</p>
+                </div>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <label class="sr-only" for="history-scope">History scope</label>
+                    <select id="history-scope" x-model="historyScope" @change="selectHistoryScope($event.target.value)" class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 py-2 text-xs font-semibold text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-accent)]">
+                        <option value="overall">Overall agreement</option>
+                        <option value="5m">5 Minutes</option>
+                        <option value="15m">15 Minutes</option>
+                        <option value="1h">1 Hour</option>
+                        <option value="4h">4 Hours</option>
+                        <option value="1d">1 Day</option>
+                        <option value="1w">1 Week</option>
+                        <option value="1mo">1 Month</option>
+                    </select>
+                    <div class="flex max-w-full gap-1 overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-1" role="group" aria-label="History range">
+                        <template x-for="range in ['24h', '7d', '30d', '90d', '1y']" :key="range">
+                            <button type="button" @click="selectHistoryRange(range)" class="shrink-0 rounded-md px-2.5 py-1.5 text-xs font-semibold transition" :class="historyRange === range ? 'bg-[var(--color-gold-bg)] text-[var(--color-gold-accent)] ring-1 ring-[var(--color-gold-border)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'" :aria-pressed="historyRange === range" x-text="range"></button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="historyLoading && !history" class="mt-6 grid min-h-48 place-items-center text-sm text-[var(--color-text-muted)]" aria-live="polite">Loading canonical history&hellip;</div>
+            <div x-show="historyIssue" x-cloak class="mt-5 flex items-center justify-between gap-4 rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-4 text-xs text-[var(--color-neutral-text)]">
+                <span>History could not be refreshed. Previously loaded data is retained.</span>
+                <button type="button" @click="refreshHistory()" class="font-bold underline">Retry</button>
+            </div>
+
+            <template x-if="history">
+                <div class="mt-6 space-y-5">
+                    <div class="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+                        <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-3.5">
+                            <span class="block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Alignment</span>
+                            <strong class="mt-1 block text-lg tabular-nums text-[var(--color-text-primary)]" x-text="history.summary.alignment_percent == null ? 'Collecting' : history.summary.alignment_percent + '%' "></strong>
+                            <small class="text-xs capitalize text-[var(--color-text-muted)]" x-text="history.summary.sample_quality + ' sample'"></small>
+                        </div>
+                        <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-3.5">
+                            <span class="block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Mature samples</span>
+                            <strong class="mt-1 block text-lg tabular-nums text-[var(--color-text-primary)]" x-text="history.summary.mature_samples"></strong>
+                            <small class="text-xs text-[var(--color-text-muted)]" x-text="history.summary.pending_samples + ' pending'"></small>
+                        </div>
+                        <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-3.5">
+                            <span class="block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Current duration</span>
+                            <strong class="mt-1 block text-lg tabular-nums text-[var(--color-text-primary)]" x-text="formatDuration(history.summary.current_bias_duration_minutes)"></strong>
+                            <small class="text-xs text-[var(--color-text-muted)]">Same classification</small>
+                        </div>
+                        <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-3.5">
+                            <span class="block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Bias flips</span>
+                            <strong class="mt-1 block text-lg tabular-nums text-[var(--color-text-primary)]" x-text="history.summary.flip_count"></strong>
+                            <small class="text-xs text-[var(--color-text-muted)]" x-text="history.range + ' window'"></small>
+                        </div>
+                    </div>
+
+                    <div class="rounded-xl border px-4 py-3 text-xs" :class="history.availability.status === 'ready' ? 'border-[var(--color-bullish-border)] bg-[var(--color-bullish-bg)] text-[var(--color-bullish-text)]' : 'border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] text-[var(--color-neutral-text)]'" x-text="history.availability.message" aria-live="polite"></div>
+
+                    <div class="grid gap-5 lg:grid-cols-[1.45fr_0.55fr]">
+                        <article class="min-w-0 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-4 sm:p-5">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-sm font-bold text-[var(--color-text-primary)]">Bias score over time</h3>
+                                    <p class="text-xs text-[var(--color-text-muted)]">Scale: bearish &minus;100 to bullish +100</p>
+                                </div>
+                                <span class="rounded-md border border-[var(--color-border)] px-2 py-1 text-xs font-semibold uppercase text-[var(--color-text-muted)]" x-text="history.scope"></span>
+                            </div>
+                            <div class="relative mt-4 h-60 w-full sm:h-72">
+                                <canvas id="bias-history-chart" role="img" :aria-label="`Historical ${history.scope} bias scores for ${history.range}`"></canvas>
+                            </div>
+                            <div class="sr-only" aria-label="Historical bias score data">
+                                <template x-for="point in history.series" :key="point.at">
+                                    <span><span x-text="formatTime(point.at)"></span>: <span x-text="point.score"></span>, <span x-text="point.label"></span>.</span>
+                                </template>
+                            </div>
+                        </article>
+
+                        <aside class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-4 sm:p-5">
+                            <h3 class="text-sm font-bold text-[var(--color-text-primary)]">What changed?</h3>
+                            <div class="mt-3 space-y-2.5">
+                                <template x-for="change in history.changes" :key="change.type + change.headline">
+                                    <div class="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] p-3">
+                                        <p class="text-xs font-medium leading-relaxed text-[var(--color-text-secondary)]" x-text="change.headline"></p>
+                                        <span class="mt-1 block text-xs text-[var(--color-text-muted)]" x-text="formatTime(change.at)"></span>
+                                    </div>
+                                </template>
+                                <p x-show="!history.changes?.length" class="text-xs leading-relaxed text-[var(--color-text-muted)]">At least two canonical observations are required before a change can be described.</p>
+                            </div>
+                        </aside>
+                    </div>
+
+                    <div x-show="history.heatmap?.length" class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-4 sm:p-5">
+                        <div class="flex items-center justify-between gap-3">
+                            <h3 class="text-sm font-bold text-[var(--color-text-primary)]">Timeframe alignment heatmap</h3>
+                            <span class="text-xs text-[var(--color-text-muted)]">Newest at right</span>
+                        </div>
+                        <div class="mt-4 overflow-x-auto pb-1">
+                            <div class="min-w-[42rem] space-y-2">
+                                <template x-for="row in history.heatmap" :key="row.scope">
+                                    <div class="grid grid-cols-[4.5rem_1fr] items-center gap-3">
+                                        <span class="text-xs font-semibold text-[var(--color-text-secondary)]" x-text="row.scope"></span>
+                                        <div class="flex justify-end gap-1">
+                                            <template x-for="point in row.points" :key="point.at">
+                                                <span class="h-4 min-w-1 flex-1 rounded-sm border" :class="biasBadgeClass(point.label)" :title="`${formatTime(point.at)} — ${point.label} (${point.score})`" :aria-label="`${row.scope}, ${point.label}, score ${point.score}`"></span>
+                                            </template>
+                                            <span x-show="!row.points.length" class="text-xs text-[var(--color-text-muted)]">No observations</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-[var(--color-border-subtle)] pt-3">
+                        <button type="button" @click="showHistoryMethodology = !showHistoryMethodology" class="text-xs font-semibold text-[var(--color-gold-accent)] hover:underline" :aria-expanded="showHistoryMethodology">Methodology &amp; limitations</button>
+                        <p x-show="showHistoryMethodology" x-cloak class="mt-2 max-w-4xl text-xs leading-relaxed text-[var(--color-text-muted)]" x-text="history.methodology.statement + ' Alignment remains hidden until ' + history.methodology.minimum_samples + ' mature observations are available. Neutral movement is within ±' + history.methodology.neutral_atr_threshold + ' ATR.'"></p>
+                    </div>
+                </div>
+            </template>
+        </section>
+
         <!-- Chart and Technical Evidence Grid -->
         <section class="grid gap-6 lg:grid-cols-[1.4fr_0.6fr] items-start">
             <!-- TradingView Chart Container -->
@@ -391,6 +515,13 @@
                             <span class="rounded-full border border-[var(--color-gold-border)] bg-[var(--color-bg-surface)] px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]" x-text="humanize(data.macro.agreement)"></span>
                         </div>
                         <p class="mt-4 text-sm leading-relaxed text-[var(--color-text-primary)] font-medium" x-text="data.macro.summary"></p>
+                        <div x-show="data.macro.historical_assessment" class="mt-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Historical context</span>
+                                <span class="text-xs font-bold capitalize text-[var(--color-gold-accent)]" x-text="humanize(data.macro.historical_assessment?.sample_quality)"></span>
+                            </div>
+                            <p class="mt-1.5 text-xs leading-relaxed text-[var(--color-text-secondary)]" x-text="data.macro.historical_assessment?.summary"></p>
+                        </div>
                         <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
                             <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
                                 <span class="block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Risk level</span>
@@ -472,6 +603,10 @@
                                             <ul class="mt-1 space-y-1 text-xs leading-relaxed text-[var(--color-text-secondary)]">
                                                 <template x-for="factor in analysis.opposing_factors" :key="factor"><li x-text="'• ' + factor"></li></template>
                                             </ul>
+                                        </div>
+                                        <div x-show="analysis.historical_assessment" class="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] p-2.5">
+                                            <p class="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Historical interpretation</p>
+                                            <p class="mt-1 text-xs leading-relaxed text-[var(--color-text-secondary)]" x-text="analysis.historical_assessment?.summary"></p>
                                         </div>
                                     </div>
                                 </div>

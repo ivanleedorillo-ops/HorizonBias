@@ -7,6 +7,8 @@ HorizonBias is a 100% AI-assisted Laravel 12 decision-support dashboard dedicate
 - `MarketDataProvider` normalizes completed candles; the included adapter targets Twelve Data.
 - `IndicatorCalculator` calculates EMA, Wilder RSI/ATR/ADX, MACD, ROC, and confirmed pivots locally.
 - `BiasScorer` creates component, timeframe, and weighted multi-timeframe scores.
+- Canonical history points preserve auditable timeframe and overall scores without counting repeated refreshes of the same completed candle as new evidence.
+- The outcome evaluator uses only stored future candles to calculate ATR-normalized historical directional alignment; it never calls a provider or simulates trades.
 - Scheduled Artisan commands persist candles, bias snapshots, independent AI assessments, and a deterministic dual-AI consensus. HTTP visitors only read stored state.
 - Gemini and Groq GPT-OSS receive the same immutable technical/evidence package. Laravel—not either model—calculates agreement and confidence.
 - A local daily request cap and model allowlists keep the workflow intentionally within the configured free-tier boundary; no paid fallback exists.
@@ -90,6 +92,32 @@ Run `php artisan ai:refresh-consensus`. The older `php artisan macro:refresh` co
 HorizonBias retrieves bounded recent evidence from the Federal Reserve monetary-policy feed, Federal Reserve speeches and testimony feed, and U.S. Bureau of Economic Analysis feed. Both models analyze the same catalogue but may return only server-issued citation IDs. The application hydrates the official headline, publication timestamp, source name, and allow-listed HTTPS URL; model-generated URLs are never accepted. One unavailable feed does not prevent the remaining official sources from being used.
 
 The default maximum evidence age is 14 days because major policy and economic releases are not necessarily published every day. If no recent relevant evidence exists, the brief remains technical-only and its event list is empty. Invalid or malformed AI results are rejected. The public dashboard shows both independent assessments, their USD-strength views, the deterministic consensus, disagreement, confidence, limitations, and verified citations.
+
+## Bias history and historical alignment
+
+Apply migrations, canonicalize existing snapshots, and evaluate outcomes already supported by stored candles:
+
+```powershell
+php artisan migrate
+php artisan bias-history:backfill
+php artisan bias-history:evaluate
+```
+
+`bias-history:backfill` does not call Twelve Data or either AI provider. Repeated runs are safe. New successful market refreshes automatically capture canonical timeframe and overall history points. The scheduler evaluates newly mature outcomes every 15 minutes and prunes canonical history beyond the configured retention period once daily.
+
+The dashboard lazily reads `GET /api/bias-history` with validated `range` and `scope` parameters. Supported ranges are `24h`, `7d`, `30d`, `90d`, and `1y`; supported scopes are `overall`, `5m`, `15m`, `1h`, `4h`, `1d`, `1w`, and `1mo`.
+
+Historical alignment compares the original bias direction with a later price move normalized by the ATR that was available when the bias was generated. Movement within the configured ATR band is neutral. Alignment remains hidden until the minimum mature sample count is reached and must not be interpreted as profitability, a forecast guarantee, or a trading recommendation.
+
+```dotenv
+BIAS_HISTORY_NEUTRAL_ATR=0.25
+BIAS_HISTORY_MINIMUM_SAMPLES=20
+BIAS_HISTORY_ESTABLISHED_SAMPLES=50
+BIAS_HISTORY_RETENTION_DAYS=730
+BIAS_HISTORY_MAX_CHART_POINTS=360
+```
+
+Gemini and Groq receive the same compact Laravel-calculated historical summary in their existing scheduled requests. This feature does not add a third model or additional routine AI calls, and neither model can change historical statistics or the deterministic technical score.
 
 ## Scheduler deployment
 

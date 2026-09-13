@@ -46,6 +46,8 @@ class DashboardTest extends TestCase
         $response->assertOk()
             ->assertSee('HorizonBias')
             ->assertSee('Illustrative demo data')
+            ->assertSee('Bias History &amp; Historical Alignment', false)
+            ->assertSee('bias-history-chart', false)
             ->assertSee('OANDA:XAUUSD', false)
             ->assertSee('href="'.url('/').'"', false)
             ->assertSee('HorizonBias provides educational market context and technical bias only.', false);
@@ -75,7 +77,7 @@ class DashboardTest extends TestCase
                 'macro' => [
                     'stance', 'gold_bias', 'usd_strength', 'risk_level', 'confidence',
                     'agreement', 'summary', 'limitations', 'analyses', 'provider_status',
-                    'events', 'generated_at', 'stale', 'status',
+                    'historical_assessment', 'events', 'generated_at', 'stale', 'status',
                 ],
                 'system',
             ]);
@@ -99,7 +101,7 @@ class DashboardTest extends TestCase
     {
         $routes = collect(Route::getRoutes()->getRoutes());
         $this->assertFalse($routes->contains(fn ($route) => str_contains($route->uri(), 'login') || str_contains($route->uri(), 'register')));
-        $applicationRoutes = $routes->filter(fn ($route) => in_array($route->uri(), ['/', 'dashboard', 'api/dashboard'], true));
+        $applicationRoutes = $routes->filter(fn ($route) => in_array($route->uri(), ['/', 'dashboard', 'api/dashboard', 'api/bias-history'], true));
         $this->assertTrue($applicationRoutes->every(fn ($route) => array_diff($route->methods(), ['GET', 'HEAD']) === []));
         $this->assertFalse($routes->contains(fn ($route) => str_contains($route->uri(), 'refresh')));
     }
@@ -159,5 +161,21 @@ class DashboardTest extends TestCase
 
         $dashboard = $this->get('/dashboard');
         $dashboard->assertOk()->assertSee($disclaimer, false);
+    }
+
+    #[Test]
+    public function bias_history_api_is_read_only_validated_and_demo_safe(): void
+    {
+        $this->getJson('/api/bias-history?range=7d&scope=overall')->assertOk()
+            ->assertJsonPath('mode', 'demo')
+            ->assertJsonPath('availability.status', 'demo')
+            ->assertJsonPath('summary.alignment_percent', null)
+            ->assertJsonStructure([
+                'mode', 'range', 'scope', 'availability', 'summary', 'series',
+                'heatmap', 'changes', 'methodology', 'generated_at',
+            ]);
+
+        $this->getJson('/api/bias-history?range=forever')->assertUnprocessable();
+        $this->postJson('/api/bias-history')->assertMethodNotAllowed();
     }
 }

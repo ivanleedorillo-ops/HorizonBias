@@ -44,6 +44,7 @@ class RefreshServicesTest extends TestCase
         $service->refresh('1h');
         $this->assertDatabaseCount('market_candles', 250);
         $this->assertDatabaseCount('bias_snapshots', 2);
+        $this->assertDatabaseCount('bias_history_points', 1);
         $this->assertDatabaseHas('bias_snapshots', ['timeframe' => '1h', 'score' => 65, 'status' => 'ready']);
     }
 
@@ -91,6 +92,10 @@ class RefreshServicesTest extends TestCase
             'gold_bias' => 'neutral', 'usd_strength' => 'neutral', 'risk_level' => 'medium',
             'confidence' => 60, 'summary' => 'Mixed forces.',
             'supporting_factors' => [], 'opposing_factors' => [], 'risk_factors' => [], 'citations' => [],
+            'historical_assessment' => [
+                'sample_quality' => 'insufficient', 'alignment_trend' => 'unclear',
+                'regime_fit' => 'unclear', 'summary' => 'Not enough mature history.', 'caveats' => [],
+            ],
         ];
         Http::fake([
             '*/interactions' => Http::sequence()
@@ -104,7 +109,7 @@ class RefreshServicesTest extends TestCase
         app(MacroRefreshService::class)->refresh();
 
         $this->assertDatabaseHas('macro_briefs', [
-            'stance' => 'mixed', 'agreement' => 'agree', 'status' => 'ready', 'prompt_version' => 'dual-ai-v1',
+            'stance' => 'mixed', 'agreement' => 'agree', 'status' => 'ready', 'prompt_version' => 'dual-ai-history-v2',
         ]);
         $this->assertCount(2, MacroBrief::latest('generated_at')->first()->analyses);
 

@@ -71,6 +71,17 @@ class GeminiMacroContextProviderTest extends TestCase
     }
 
     #[Test]
+    public function it_rejects_an_invalid_historical_assessment(): void
+    {
+        $result = $this->validResult();
+        $result['historical_assessment']['sample_quality'] = 'guaranteed';
+        Http::fake(['*/interactions' => Http::response($this->interactionResponse($result))]);
+
+        $this->expectException(AiProviderException::class);
+        $this->provider()->generate([], []);
+    }
+
+    #[Test]
     public function it_classifies_quota_failures_without_exposing_the_key(): void
     {
         Http::fake(['*/interactions' => Http::response([], 429)]);
@@ -110,6 +121,13 @@ class GeminiMacroContextProviderTest extends TestCase
             'supporting_factors' => ['Longer-horizon structure remains constructive.'],
             'opposing_factors' => ['Dollar conditions may constrain gold.'],
             'risk_factors' => ['Evidence can become stale.'],
+            'historical_assessment' => [
+                'sample_quality' => 'insufficient',
+                'alignment_trend' => 'unclear',
+                'regime_fit' => 'unclear',
+                'summary' => 'The historical sample is not mature enough.',
+                'caveats' => ['Do not infer reliability from a small sample.'],
+            ],
             'citations' => [],
         ];
     }

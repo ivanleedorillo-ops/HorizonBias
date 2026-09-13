@@ -69,6 +69,19 @@ class AiConsensusEngineTest extends TestCase
         $this->assertArrayNotHasKey('citation_id', $result['events'][0]);
     }
 
+    #[Test]
+    public function historical_caveats_are_deduplicated_by_deterministic_consensus(): void
+    {
+        $one = $this->analysis('Gemini', 'neutral', 'neutral', 60);
+        $two = $this->analysis('Groq GPT-OSS', 'neutral', 'neutral', 60);
+        $one['historical_assessment']['caveats'] = ['Limited regime coverage.'];
+        $two['historical_assessment']['caveats'] = ['Limited regime coverage.'];
+
+        $result = (new AiConsensusEngine)->build(['gemini' => $one, 'groq' => $two], $this->technicalContext(), $this->evidence());
+
+        $this->assertSame(['Limited regime coverage.', 'The mature historical sample is too small for a reliability percentage.'], $result['historical_assessment']['caveats']);
+    }
+
     private function analysis(string $provider, string $gold, string $usd, int $confidence): array
     {
         return [
@@ -83,6 +96,10 @@ class AiConsensusEngineTest extends TestCase
             'supporting_factors' => [],
             'opposing_factors' => [],
             'risk_factors' => [],
+            'historical_assessment' => [
+                'sample_quality' => 'insufficient', 'alignment_trend' => 'unclear',
+                'regime_fit' => 'unclear', 'summary' => 'Not enough history.', 'caveats' => [],
+            ],
             'events' => [],
         ];
     }
@@ -97,6 +114,7 @@ class AiConsensusEngineTest extends TestCase
         return [
             'gold' => ['required_timeframes_available' => true, 'timeframes' => $frames],
             'usd_proxy' => ['available' => false, 'timeframes' => []],
+            'history' => ['overall' => ['sample_quality' => 'insufficient']],
         ];
     }
 

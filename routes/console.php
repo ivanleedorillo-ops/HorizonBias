@@ -10,3 +10,5 @@ Schedule::command('market:refresh-bias --timeframe=1d')->hourlyAt(7)->withoutOve
 Schedule::command('market:refresh-bias --timeframe=1w')->cron('9 */6 * * *')->withoutOverlapping();
 Schedule::command('market:refresh-bias --timeframe=1mo')->twiceDaily(1, 13)->withoutOverlapping();
 Schedule::command('ai:refresh-consensus')->cron('11 */3 * * *')->withoutOverlapping();
+Schedule::command('bias-history:evaluate')->everyFifteenMinutes()->withoutOverlapping();
+Schedule::command('bias-history:prune')->dailyAt('02:30')->withoutOverlapping();

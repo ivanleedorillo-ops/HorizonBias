@@ -2,14 +2,19 @@
 
 namespace App\Services\Dashboard;
 
-use App\Models\BiasSnapshot;
 use App\Models\MacroBrief;
 use App\Services\Analysis\BiasScorer;
+use App\Services\Analysis\LatestBiasSnapshots;
 use App\Services\Market\MarketMode;
 
 final class DashboardService
 {
-    public function __construct(private readonly MarketMode $mode, private readonly BiasScorer $scorer, private readonly DemoDashboard $demo) {}
+    public function __construct(
+        private readonly MarketMode $mode,
+        private readonly BiasScorer $scorer,
+        private readonly DemoDashboard $demo,
+        private readonly LatestBiasSnapshots $latestSnapshots,
+    ) {}
 
     public function data(): array
     {
@@ -17,7 +22,7 @@ final class DashboardService
             return $this->demo->data($this->mode->licensingGateApplied());
         }
 
-        $latest = BiasSnapshot::query()->latest('generated_at')->get()->unique('timeframe')->keyBy('timeframe');
+        $latest = $this->latestSnapshots->forSymbol(config('horizon.symbol'));
         $frames = [];
         $scores = [];
         foreach (config('horizon.timeframes') as $key => $settings) {
@@ -26,7 +31,9 @@ final class DashboardService
                 continue;
             }
             $stale = $snapshot->status !== 'ready' || $snapshot->data_as_of->lt(now('UTC')->subMinutes($settings['stale_after']));
-            $scores[$key] = $snapshot->score;
+            if (! $stale) {
+                $scores[$key] = $snapshot->score;
+            }
             $frames[] = [
                 'key' => $key, 'label' => $settings['label'], 'score' => $snapshot->score, 'bias' => $snapshot->label,
                 'component_scores' => $snapshot->component_scores, 'metrics' => $snapshot->metrics, 'explanations' => $snapshot->explanations,
@@ -66,6 +73,11 @@ final class DashboardService
                 'summary' => 'Dual-AI context is not available yet.',
                 'limitations' => ['Run the AI consensus refresh after configuring at least one AI provider.'],
                 'analyses' => [],
+                'historical_assessment' => [
+                    'sample_quality' => 'insufficient', 'alignment_trend' => 'unclear',
+                    'regime_fit' => 'unclear', 'agreement' => 'unavailable',
+                    'summary' => 'Historical evidence is not available yet.', 'caveats' => [],
+                ],
                 'provider_status' => [],
                 'events' => [],
                 'generated_at' => null,
@@ -88,6 +100,7 @@ final class DashboardService
                 'supporting_factors' => $analysis['supporting_factors'] ?? [],
                 'opposing_factors' => $analysis['opposing_factors'] ?? [],
                 'risk_factors' => $analysis['risk_factors'] ?? [],
+                'historical_assessment' => $analysis['historical_assessment'] ?? null,
                 'citation_ids' => collect($analysis['events'] ?? [])->pluck('citation_id')->filter()->values()->all(),
             ];
         })->values()->all();
@@ -103,6 +116,11 @@ final class DashboardService
             'summary' => $macro->summary,
             'limitations' => $consensus['limitations'] ?? [],
             'analyses' => $analyses,
+            'historical_assessment' => $consensus['historical_assessment'] ?? [
+                'sample_quality' => 'insufficient', 'alignment_trend' => 'unclear',
+                'regime_fit' => 'unclear', 'agreement' => 'unavailable',
+                'summary' => 'Historical evidence predates this assessment.', 'caveats' => [],
+            ],
             'provider_status' => array_values($macro->provider_status ?? []),
             'events' => $macro->events,
             'generated_at' => $macro->generated_at->toIso8601String(),

@@ -7,6 +7,7 @@ use App\Exceptions\AiProviderException;
 use App\Models\BiasSnapshot;
 use App\Models\MacroBrief;
 use App\Services\Analysis\BiasScorer;
+use App\Services\History\ReliabilityService;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
@@ -19,6 +20,7 @@ final class MacroRefreshService
         private readonly AiConsensusEngine $consensusEngine,
         private readonly AiUsageLimiter $usageLimiter,
         private readonly BiasScorer $biasScorer,
+        private readonly ReliabilityService $reliability,
     ) {}
 
     public function refresh(): MacroBrief
@@ -38,7 +40,10 @@ final class MacroRefreshService
             }
             try {
                 $this->usageLimiter->claim($provider->name());
-                $analyses[$key] = $provider->generate($technicalContext, $evidence);
+                $analyses[$key] = $this->normalizeHistoricalAssessment(
+                    $provider->generate($technicalContext, $evidence),
+                    $technicalContext['history'] ?? [],
+                );
                 $providerStatus[$key] = $this->providerStatus($provider, 'ready');
             } catch (AiProviderException $exception) {
                 $providerStatus[$key] = $this->providerStatus($provider, $exception->category);
@@ -95,6 +100,7 @@ final class MacroRefreshService
         return [
             'gold' => $this->technicalContextFor(config('horizon.symbol')),
             'usd_proxy' => $this->technicalContextFor(config('horizon.usd_proxy.symbol')),
+            'history' => $this->reliability->contextForAi(),
         ];
     }
 
@@ -141,5 +147,17 @@ final class MacroRefreshService
             'requests_today' => $this->usageLimiter->attempts($provider->name()),
             'daily_cap' => (int) config('horizon.ai.daily_request_cap'),
         ];
+    }
+
+    private function normalizeHistoricalAssessment(array $analysis, array $history): array
+    {
+        $quality = $history['overall']['sample_quality'] ?? 'insufficient';
+        $analysis['historical_assessment']['sample_quality'] = $quality;
+        if ($quality === 'insufficient') {
+            $analysis['historical_assessment']['alignment_trend'] = 'unclear';
+            $analysis['historical_assessment']['regime_fit'] = 'unclear';
+        }
+
+        return $analysis;
     }
 }

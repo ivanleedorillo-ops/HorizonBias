@@ -6,6 +6,7 @@ use App\Contracts\MarketDataProvider;
 use App\Models\BiasSnapshot;
 use App\Models\MarketCandle;
 use App\Services\Analysis\BiasScorer;
+use App\Services\History\BiasHistoryService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -16,6 +17,7 @@ final class MarketRefreshService
         private readonly MarketDataProvider $provider,
         private readonly BiasScorer $scorer,
         private readonly MarketMode $mode,
+        private readonly ?BiasHistoryService $history = null,
     ) {}
 
     public function refresh(string $timeframe): BiasSnapshot
@@ -50,7 +52,7 @@ final class MarketRefreshService
                     ['open', 'high', 'low', 'close', 'volume', 'updated_at'],
                 );
 
-                return BiasSnapshot::create([
+                $snapshot = BiasSnapshot::create([
                     'symbol' => config('horizon.symbol'),
                     'timeframe' => $timeframe,
                     'score' => $result['score'],
@@ -63,6 +65,10 @@ final class MarketRefreshService
                     'generated_at' => $now,
                     'status' => 'ready',
                 ]);
+
+                ($this->history ?? app(BiasHistoryService::class))->capture($snapshot);
+
+                return $snapshot;
             });
         } catch (\Throwable $exception) {
             BiasSnapshot::query()->where('timeframe', $timeframe)->latest('generated_at')->limit(1)->update(['status' => 'stale']);

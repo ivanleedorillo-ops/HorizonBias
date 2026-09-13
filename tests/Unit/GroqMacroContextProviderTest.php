@@ -88,6 +88,13 @@ class GroqMacroContextProviderTest extends TestCase
             'supporting_factors' => ['USD conditions appear softer.'],
             'opposing_factors' => [],
             'risk_factors' => ['Conditions can reverse.'],
+            'historical_assessment' => [
+                'sample_quality' => 'insufficient',
+                'alignment_trend' => 'unclear',
+                'regime_fit' => 'unclear',
+                'summary' => 'The historical sample is not mature enough.',
+                'caveats' => ['Do not infer reliability from a small sample.'],
+            ],
             'citations' => [],
         ];
     }
