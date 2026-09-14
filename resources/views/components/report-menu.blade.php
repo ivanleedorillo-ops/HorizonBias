@@ -15,13 +15,13 @@
         </div>
         <div class="mt-1 grid gap-1">
             <a href="{{ route('reports.current', ['format' => 'pdf']) }}" class="rounded-lg px-2.5 py-2 text-xs text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-page-secondary)] hover:text-[var(--color-text-primary)]">
-                <strong class="block">PDF report</strong><span class="text-[10px] text-[var(--color-text-muted)]">Fixed-layout document for sharing</span>
+                <strong class="block">PDF report</strong><span class="text-[10px] text-[var(--color-text-muted)]">Concise, polished snapshot for sharing</span>
             </a>
             <a href="{{ route('reports.current', ['format' => 'docx']) }}" class="rounded-lg px-2.5 py-2 text-xs text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-page-secondary)] hover:text-[var(--color-text-primary)]">
-                <strong class="block">Word document</strong><span class="text-[10px] text-[var(--color-text-muted)]">Editable DOCX report</span>
+                <strong class="block">Word document</strong><span class="text-[10px] text-[var(--color-text-muted)]">Editable professional summary</span>
             </a>
             <a href="{{ route('reports.current', ['format' => 'print']) }}" target="_blank" rel="noopener" class="rounded-lg px-2.5 py-2 text-xs text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-page-secondary)] hover:text-[var(--color-text-primary)]">
-                <strong class="block">Print preview</strong><span class="text-[10px] text-[var(--color-text-muted)]">Print or use the browser's Save as PDF</span>
+                <strong class="block">Print preview</strong><span class="text-[10px] text-[var(--color-text-muted)]">Themeable, print-ready report</span>
             </a>
         </div>
     </div>

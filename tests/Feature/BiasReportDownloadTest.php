@@ -40,8 +40,11 @@ class BiasReportDownloadTest extends TestCase
             ->assertSee('HorizonBias XAU/USD Bias Report')
             ->assertSee('ILLUSTRATIVE DEMO')
             ->assertSee('Seven-timeframe technical evidence')
-            ->assertSee('Macroeconomic brief')
+            ->assertSee('Dual-AI context and verified events')
             ->assertSee('Bias history and historical alignment')
+            ->assertSee('Key report takeaways', false)
+            ->assertDontSee('Indicator readings')
+            ->assertDontSee('Illustrative Gemini assessment for layout testing only.')
             ->assertSee('HorizonBias provides educational market context and technical bias only.')
             ->assertSee('Print / Save as PDF')
             ->assertSee('Report color theme', false)
@@ -91,6 +94,11 @@ class BiasReportDownloadTest extends TestCase
             $this->assertTrue(isset($archive['word/document.xml']));
             $this->assertTrue(isset($archive['word/styles.xml']));
             $this->assertStringContainsString('HorizonBias XAU/USD Bias Report', $archive['word/document.xml']->getContent());
+            $this->assertStringContainsString('EXECUTIVE SUMMARY', $archive['word/document.xml']->getContent());
+            $this->assertStringContainsString('SEVEN-TIMEFRAME MATRIX', $archive['word/document.xml']->getContent());
+            $this->assertStringNotContainsString('Illustrative Gemini assessment for layout testing only.', $archive['word/document.xml']->getContent());
+            $this->assertStringContainsString('w:styleId="KeyFinding"', $archive['word/styles.xml']->getContent());
+            $this->assertStringContainsString('w:styleId="Notice"', $archive['word/styles.xml']->getContent());
             $this->assertStringContainsString('educational market context', $archive['word/document.xml']->getContent());
             unset($archive);
         } finally {

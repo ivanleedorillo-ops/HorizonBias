@@ -105,6 +105,9 @@
         .meter { height: 5px; margin-top: 11px; overflow: hidden; border-radius: 99px; background: var(--surface-strong); }
         .meter-fill { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--negative), var(--gold), var(--positive)); }
         .summary-copy { margin-top: 12px; padding: 0 2px; }
+        .takeaways { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+        .takeaway { position: relative; margin: 0; border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px 10px 27px; background: var(--surface); color: var(--text-soft); font-size: 10.5px; line-height: 1.5; break-inside: avoid; }
+        .takeaway::before { content: ""; position: absolute; top: 15px; left: 12px; width: 6px; height: 6px; border-radius: 99px; background: var(--gold-bright); }
         .timeframe-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .timeframe-card { border: 1px solid var(--border); border-radius: 10px; padding: 11px; background: var(--surface); break-inside: avoid; }
         .timeframe-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
@@ -126,7 +129,11 @@
         .card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface); break-inside: avoid; }
         .card small { display: block; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
         .card strong { display: block; margin-top: 5px; color: var(--text); font-size: 15px; }
-        .analysis { margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--border-strong); }
+        .context-layout { display: grid; grid-template-columns: 1.05fr .95fr; gap: 12px; }
+        .context-panel { border: 1px solid var(--border); border-radius: 12px; padding: 15px; background: var(--surface); break-inside: avoid; }
+        .context-panel .cards { grid-template-columns: repeat(3, 1fr); }
+        .model-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .model-view { border: 1px solid var(--border); border-radius: 999px; padding: 5px 8px; color: var(--text-soft); font-size: 9px; }
         .event-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
         .event { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface); break-inside: avoid; }
         .event h3 { margin-top: 0; }
@@ -147,7 +154,7 @@
             .snapshot-cell { border-top: 1px solid var(--border); border-left: 0; }
             .snapshot-cell:first-child { border-top: 0; }
             .timeframe-grid { grid-template-columns: repeat(2, 1fr); }
-            .cards, .event-grid { grid-template-columns: 1fr; }
+            .cards, .event-grid, .takeaways, .context-layout { grid-template-columns: 1fr; }
             footer { flex-direction: column; }
         }
         @media (max-width: 460px) {
@@ -247,7 +254,11 @@
                 <span class="snapshot-detail">Only completed candles are analyzed</span>
             </div>
         </div>
-        @if($report['overall'])<p class="summary-copy">{{ $report['overall']['summary'] }}</p>@endif
+        <div class="takeaways" aria-label="Key report takeaways">
+            @foreach($report['executive']['takeaways'] ?? [] as $takeaway)
+                <p class="takeaway">{{ $takeaway }}</p>
+            @endforeach
+        </div>
     </section>
 
     <section class="section" aria-labelledby="timeframes-heading">
@@ -274,56 +285,38 @@
         </div>
     </section>
 
-    <section class="section" aria-labelledby="indicators-heading">
-        <div class="section-heading">
-            <div><div class="eyebrow">Audit detail</div><h2 id="indicators-heading">Indicator readings</h2></div>
-            <span class="muted">Unrounded inputs; rounded for display</span>
-        </div>
-        <div class="table-wrap"><table>
-            <thead><tr><th>Horizon</th><th>Close</th><th>EMA 20</th><th>EMA 50</th><th>EMA 200</th><th>RSI 14</th><th>MACD</th><th>Signal</th><th>ROC 10</th><th>ATR 14</th><th>ADX 14</th><th>Completed</th></tr></thead>
-            <tbody>
-            @forelse($report['timeframes'] as $frame)
-                <tr>
-                    <td><strong>{{ $frame['label'] }}</strong></td>
-                    <td>{{ $number($frame['metrics']['close'] ?? null) }}</td><td>{{ $number($frame['metrics']['ema20'] ?? null) }}</td><td>{{ $number($frame['metrics']['ema50'] ?? null) }}</td><td>{{ $number($frame['metrics']['ema200'] ?? null) }}</td>
-                    <td>{{ $number($frame['metrics']['rsi14'] ?? null) }}</td><td>{{ $number($frame['metrics']['macd'] ?? null) }}</td><td>{{ $number($frame['metrics']['macd_signal'] ?? null) }}</td><td>{{ $number($frame['metrics']['roc10'] ?? null) }}%</td><td>{{ $number($frame['metrics']['atr14'] ?? null) }}</td><td>{{ $number($frame['metrics']['adx14'] ?? null) }}</td><td>{{ $time($frame['completed_at'] ?? $frame['data_as_of'] ?? null) }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="12">No indicator readings are available.</td></tr>
-            @endforelse
-            </tbody>
-        </table></div>
-    </section>
-
     <section class="section" aria-labelledby="macro-heading">
         <div class="section-heading">
-            <div><div class="eyebrow">Independent AI context</div><h2 id="macro-heading">Macroeconomic brief</h2></div>
-            <span class="muted">Never blended into technical scoring</span>
+            <div><div class="eyebrow">Independent interpretation</div><h2 id="macro-heading">Dual-AI context and verified events</h2></div>
+            <span class="muted">Separate from technical scoring</span>
         </div>
-        <div class="cards">
-            <div class="card"><small>Gold context</small><strong class="{{ $tone($report['macro']['gold_bias'] ?? '') }}">{{ strtoupper($report['macro']['gold_bias'] ?? 'Unavailable') }}</strong></div>
-            <div class="card"><small>USD strength</small><strong>{{ strtoupper($report['macro']['usd_strength'] ?? 'Unavailable') }}</strong></div>
-            <div class="card"><small>Consensus</small><strong>{{ strtoupper(str_replace('_', ' ', $report['macro']['agreement'] ?? 'Unavailable')) }}</strong><span class="muted">{{ $report['macro']['confidence'] ?? 0 }}% confidence &middot; {{ strtoupper($report['macro']['risk_level'] ?? 'Unavailable') }} risk</span></div>
-        </div>
-        <p>{{ $report['macro']['summary'] ?? 'AI context is unavailable.' }}</p>
-        <p class="muted">AI assessment generated {{ $time($report['macro']['generated_at'] ?? null) }} &middot; Status {{ strtoupper($report['macro']['status'] ?? 'unavailable') }}</p>
-        @foreach($report['macro']['analyses'] ?? [] as $analysis)
-            <div class="analysis"><h3>{{ $analysis['provider'] }} <span class="muted">{{ $analysis['model'] ?? '' }}</span></h3><p>{{ $analysis['summary'] }}</p></div>
-        @endforeach
-    </section>
-
-    <section class="section" aria-labelledby="events-heading">
-        <div class="section-heading"><div><div class="eyebrow">Source audit</div><h2 id="events-heading">Verified event context and citations</h2></div></div>
-        <div class="event-grid">
-            @forelse($report['macro']['events'] ?? [] as $event)
-                <article class="event">
-                    <h3>{{ $event['headline'] }} <span class="{{ $tone($event['direction'] ?? '') }}">&middot; {{ strtoupper($event['direction'] ?? 'mixed') }}</span></h3>
-                    <p>{{ $event['why_it_matters'] }}</p>
-                    <p class="muted">{{ $event['source_name'] }} &mdash; <a href="{{ $event['source_url'] }}" rel="noopener noreferrer">Open verified source</a></p>
-                </article>
-            @empty
-                <p>No verified event citations are available in this stored assessment.</p>
-            @endforelse
+        <div class="context-layout">
+            <div class="context-panel">
+                <div class="cards">
+                    <div class="card"><small>Gold</small><strong class="{{ $tone($report['macro']['gold_bias'] ?? '') }}">{{ strtoupper($report['macro']['gold_bias'] ?? 'Unavailable') }}</strong></div>
+                    <div class="card"><small>USD</small><strong>{{ strtoupper($report['macro']['usd_strength'] ?? 'Unavailable') }}</strong></div>
+                    <div class="card"><small>Confidence</small><strong>{{ $report['macro']['confidence'] ?? 0 }}%</strong><span class="muted">{{ strtoupper(str_replace('_', ' ', $report['macro']['agreement'] ?? 'Unavailable')) }}</span></div>
+                </div>
+                <p>{{ $report['executive']['macro_summary'] ?? 'AI context is unavailable.' }}</p>
+                <div class="model-strip" aria-label="Individual AI positions">
+                    @foreach($report['macro']['analyses'] ?? [] as $analysis)
+                        <span class="model-view"><strong>{{ $analysis['provider'] ?? 'AI' }}</strong> &middot; {{ strtoupper($analysis['gold_bias'] ?? 'unavailable') }} gold &middot; {{ $analysis['confidence'] ?? 0 }}%</span>
+                    @endforeach
+                </div>
+                <p class="muted">Generated {{ $time($report['macro']['generated_at'] ?? null) }} &middot; {{ strtoupper($report['macro']['risk_level'] ?? 'Unavailable') }} risk &middot; {{ strtoupper($report['macro']['status'] ?? 'unavailable') }}</p>
+            </div>
+            <div class="context-panel">
+                <div class="eyebrow">Top verified developments</div>
+                @forelse($report['executive']['events'] ?? [] as $event)
+                    <article class="event">
+                        <h3>{{ $event['headline'] }} <span class="{{ $tone($event['direction'] ?? '') }}">&middot; {{ strtoupper($event['direction'] ?? 'mixed') }}</span></h3>
+                        <p>{{ $event['why_it_matters'] }}</p>
+                        <p class="muted">{{ $event['source_name'] }} &middot; <a href="{{ $event['source_url'] }}" rel="noopener noreferrer">Verified source</a></p>
+                    </article>
+                @empty
+                    <p>No verified event citations are available in this stored assessment.</p>
+                @endforelse
+            </div>
         </div>
     </section>
 

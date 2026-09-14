@@ -9,134 +9,105 @@ final class ReportDocumentContent
     public function blocks(array $report): array
     {
         $blocks = [];
-        $heading = function (string $text) use (&$blocks): void {
-            $blocks[] = ['text' => $text, 'style' => 'heading'];
-        };
-        $line = function (?string $text = '') use (&$blocks): void {
-            $blocks[] = ['text' => $text ?? '', 'style' => 'body'];
+        $add = function (string $text, string $style = 'body') use (&$blocks): void {
+            $blocks[] = ['text' => $text, 'style' => $style];
         };
 
-        $heading($report['title']);
-        $line("Report ID: {$report['report_id']}");
-        $line('Generated: '.$this->time($report['generated_at']));
-        $line('Mode: '.strtoupper($report['mode']));
+        $add($report['title'], 'title');
+        $add('Concise stored decision-support snapshot · '.$report['report_id'], 'subtitle');
+        $add('Generated '.$this->time($report['generated_at']).' · '.strtoupper($report['mode']).' mode', 'meta');
         if (! empty($report['notice'])) {
-            $line('Notice: '.$report['notice']);
+            $add('DATA NOTICE · '.$report['notice'], 'notice');
         }
 
-        $heading('MARKET OVERVIEW');
-        $line('Symbol: '.$report['symbol']);
-        $line('Provider: '.($report['system']['market_provider_label'] ?? $report['system']['market_provider'] ?? 'Unavailable'));
-        $line('Price: '.$this->number($report['quote']['price'] ?? null, 2).' '.($report['quote']['currency'] ?? 'USD'));
-        $line('Technical data completed through: '.$this->time($report['quote']['completed_at'] ?? $report['quote']['as_of'] ?? null));
-        $line('Overall bias: '.($report['overall']['label'] ?? 'Unavailable').' ('.$this->score($report['overall']['score'] ?? null).')');
-        $line('Overall status: '.(! empty($report['overall']['stale']) ? 'STALE' : ($report['overall'] ? 'READY' : 'UNAVAILABLE')));
-        if (! empty($report['overall']['summary'])) {
-            $line($report['overall']['summary']);
+        $add('EXECUTIVE SUMMARY', 'heading');
+        $add(sprintf(
+            '%s · %s %s · %s technical bias · data through %s',
+            $report['symbol'],
+            $this->number($report['quote']['price'] ?? null, 2),
+            $report['quote']['currency'] ?? 'USD',
+            $report['overall']['label'] ?? 'Unavailable',
+            $this->time($report['quote']['completed_at'] ?? $report['quote']['as_of'] ?? null),
+        ), 'key');
+        $add('Overall technical score: '.$this->score($report['overall']['score'] ?? null).' / 100 · '.(! empty($report['overall']['stale']) ? 'STALE' : ($report['overall'] ? 'READY' : 'UNAVAILABLE')), 'meta');
+        foreach ($report['executive']['takeaways'] ?? [] as $takeaway) {
+            $add($takeaway, 'bullet');
         }
 
-        $heading('TIMEFRAME EVIDENCE');
-        if ($report['timeframes'] === []) {
-            $line('No timeframe snapshots are available.');
+        $add('SEVEN-TIMEFRAME MATRIX', 'heading');
+        if (($report['timeframes'] ?? []) === []) {
+            $add('No timeframe snapshots are available.', 'body');
         }
-        foreach ($report['timeframes'] as $timeframe) {
+        foreach ($report['timeframes'] ?? [] as $timeframe) {
             $components = $timeframe['component_scores'] ?? [];
             $metrics = $timeframe['metrics'] ?? [];
-            $line(sprintf(
-                '%s | %s (%s) | %s | completed %s',
-                $timeframe['label'] ?? $timeframe['key'] ?? 'Unknown timeframe',
+            $add(sprintf(
+                '%s · %s %s · T %s  M %s  S %s  B %s · RSI %s  ADX %s · %s',
+                $timeframe['label'] ?? $timeframe['key'] ?? 'Unknown',
                 $timeframe['bias'] ?? 'Unavailable',
                 $this->score($timeframe['score'] ?? null),
-                strtoupper($timeframe['status'] ?? 'unavailable'),
-                $this->time($timeframe['completed_at'] ?? $timeframe['data_as_of'] ?? null),
-            ));
-            $line(sprintf(
-                'Components — Trend %s; Momentum %s; Structure %s; Breakout %s',
                 $this->score($components['trend'] ?? null),
                 $this->score($components['momentum'] ?? null),
                 $this->score($components['structure'] ?? null),
                 $this->score($components['breakout'] ?? null),
-            ));
-            $line(sprintf(
-                'Indicators — Close %s; EMA20 %s; EMA50 %s; EMA200 %s; RSI14 %s; MACD %s; Signal %s; ROC10 %s; ATR14 %s; ADX14 %s',
-                $this->number($metrics['close'] ?? null),
-                $this->number($metrics['ema20'] ?? null),
-                $this->number($metrics['ema50'] ?? null),
-                $this->number($metrics['ema200'] ?? null),
-                $this->number($metrics['rsi14'] ?? null),
-                $this->number($metrics['macd'] ?? null),
-                $this->number($metrics['macd_signal'] ?? null),
-                $this->number($metrics['roc10'] ?? null),
-                $this->number($metrics['atr14'] ?? null),
-                $this->number($metrics['adx14'] ?? null),
-            ));
-            foreach (array_slice($timeframe['explanations'] ?? [], 0, 5) as $explanation) {
-                $line('• '.$explanation);
-            }
-            $line();
+                $this->number($metrics['rsi14'] ?? null, 1),
+                $this->number($metrics['adx14'] ?? null, 1),
+                strtoupper($timeframe['status'] ?? 'unavailable'),
+            ), 'matrix');
         }
+        $add('T = trend · M = momentum · S = market structure · B = breakout. ATR and ADX are display metrics only.', 'meta');
 
-        $macro = $report['macro'];
-        $heading('AI MACRO CONTEXT — SEPARATE FROM TECHNICAL SCORING');
-        $line(sprintf(
-            'Status: %s | Gold bias: %s | USD strength: %s | Agreement: %s | Confidence: %s%% | Risk: %s',
-            strtoupper($macro['status'] ?? 'unavailable'),
+        $macro = $report['macro'] ?? [];
+        $add('DUAL-AI MARKET CONTEXT', 'heading');
+        $add(sprintf(
+            '%s gold · %s USD · %s · %d%% confidence · %s risk',
             strtoupper($macro['gold_bias'] ?? 'unavailable'),
             strtoupper($macro['usd_strength'] ?? 'unavailable'),
             strtoupper(str_replace('_', ' ', $macro['agreement'] ?? 'unavailable')),
             is_numeric($macro['confidence'] ?? null) ? (int) $macro['confidence'] : 0,
             strtoupper($macro['risk_level'] ?? 'unavailable'),
-        ));
-        $line('Generated: '.$this->time($macro['generated_at'] ?? null));
-        $line($macro['summary'] ?? 'AI context is unavailable.');
-        foreach ($macro['limitations'] ?? [] as $limitation) {
-            $line('Limitation: '.$limitation);
-        }
+        ), 'key');
+        $add($report['executive']['macro_summary'] ?? 'AI context is unavailable.', 'body');
         foreach ($macro['analyses'] ?? [] as $analysis) {
-            $line(sprintf(
-                '%s (%s): %s gold, %s USD, %s%% confidence. %s',
+            $add(sprintf(
+                '%s: %s gold · %s USD · %d%% confidence',
                 $analysis['provider'] ?? 'AI provider',
-                $analysis['model'] ?? 'model unavailable',
                 strtoupper($analysis['gold_bias'] ?? 'unavailable'),
                 strtoupper($analysis['usd_strength'] ?? 'unavailable'),
                 is_numeric($analysis['confidence'] ?? null) ? (int) $analysis['confidence'] : 0,
-                $analysis['summary'] ?? '',
-            ));
+            ), 'bullet');
+        }
+        $add('AI context is independent and never changes the deterministic technical score. Generated '.$this->time($macro['generated_at'] ?? null).'.', 'meta');
+
+        $events = $report['executive']['events'] ?? [];
+        if ($events !== []) {
+            $add('VERIFIED EVENT HIGHLIGHTS', 'heading');
+            foreach ($events as $event) {
+                $add(($event['headline'] ?? 'Event').' · '.strtoupper($event['direction'] ?? 'mixed'), 'key');
+                $add($event['why_it_matters'] ?? '', 'body');
+                $add('Source: '.($event['source_name'] ?? 'Unavailable').' · '.($event['source_url'] ?? 'Unavailable'), 'source');
+            }
         }
 
-        $heading('VERIFIED EVENT CONTEXT');
-        if (($macro['events'] ?? []) === []) {
-            $line('No verified event citations are available in this stored assessment.');
-        }
-        foreach ($macro['events'] ?? [] as $event) {
-            $line(($event['headline'] ?? 'Event').' ['.strtoupper($event['direction'] ?? 'mixed').']');
-            $line($event['why_it_matters'] ?? '');
-            $line('Source: '.($event['source_name'] ?? 'Source unavailable').' — '.($event['source_url'] ?? 'URL unavailable'));
-        }
-
-        $history = $report['history'];
+        $history = $report['history'] ?? [];
         $summary = $history['summary'] ?? [];
-        $heading('BIAS HISTORY AND HISTORICAL ALIGNMENT');
-        $line($history['availability']['message'] ?? 'Historical evidence is unavailable.');
-        $line(sprintf(
-            'Window: %s | Mature samples: %s | Pending: %s | Alignment: %s | Sample quality: %s | Bias flips: %s',
-            $history['range'] ?? '7d',
+        $add('RELIABILITY SNAPSHOT', 'heading');
+        $add(sprintf(
+            '7-day window · %s mature · %s pending · %s alignment · %s sample quality · %s flips',
             $summary['mature_samples'] ?? 0,
             $summary['pending_samples'] ?? 0,
-            isset($summary['alignment_percent']) ? $summary['alignment_percent'].'%' : 'Collecting',
+            isset($summary['alignment_percent']) ? $summary['alignment_percent'].'%' : 'collecting',
             strtoupper($summary['sample_quality'] ?? 'insufficient'),
             $summary['flip_count'] ?? 0,
-        ));
-        $line($history['methodology']['statement'] ?? 'Historical alignment is not a profitability backtest.');
-        foreach ($history['changes'] ?? [] as $change) {
-            $line('Recent change: '.($change['headline'] ?? ''));
-        }
+        ), 'key');
+        $add($history['availability']['message'] ?? 'Historical evidence is unavailable.', 'body');
+        $add($history['methodology']['statement'] ?? 'Historical alignment is not a profitability backtest.', 'meta');
 
-        $heading('BOUNDARIES AND RISK NOTICE');
-        foreach ($report['boundaries'] as $boundary) {
-            $line($boundary);
+        $add('BOUNDARIES & RISK', 'heading');
+        foreach ($report['boundaries'] ?? [] as $boundary) {
+            $add($boundary, 'bullet');
         }
-        $line($report['disclaimer']);
+        $add($report['disclaimer'], 'notice');
 
         return $blocks;
     }

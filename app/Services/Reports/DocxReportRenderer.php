@@ -51,16 +51,28 @@ final class DocxReportRenderer
     {
         $body = '';
         foreach ($this->content->blocks($report) as $block) {
-            $body .= $this->paragraph((string) $block['text'], $block['style'] === 'heading' ? 'Heading1' : null);
+            $style = match ($block['style']) {
+                'title' => 'Title',
+                'subtitle' => 'Subtitle',
+                'heading' => 'Heading1',
+                'key' => 'KeyFinding',
+                'matrix' => 'MatrixRow',
+                'bullet' => 'CompactBullet',
+                'meta', 'source' => 'Caption',
+                'notice' => 'Notice',
+                default => null,
+            };
+            $body .= $this->paragraph((string) $block['text'], $style);
         }
         if ($links !== []) {
-            $body .= $this->paragraph('SOURCE LINKS', 'Heading1');
+            $body .= $this->paragraph('VERIFIED SOURCE LINKS', 'Heading1');
             foreach ($links as $index => $link) {
                 $id = 'rId'.($index + 2);
-                $body .= '<w:p><w:hyperlink r:id="'.$id.'"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>'.$this->xml($link['name'].' — '.$link['url']).'</w:t></w:r></w:hyperlink></w:p>';
+                $label = $this->xml($link['name'].' - '.$link['url']);
+                $body .= '<w:p><w:pPr><w:pStyle w:val="Caption"/></w:pPr><w:hyperlink r:id="'.$id.'"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>'.$label.'</w:t></w:r></w:hyperlink></w:p>';
             }
         }
-        $body .= '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080"/></w:sectPr>';
+        $body .= '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="900" w:right="1000" w:bottom="900" w:left="1000"/></w:sectPr>';
 
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>'
@@ -70,6 +82,9 @@ final class DocxReportRenderer
     private function paragraph(string $text, ?string $style = null): string
     {
         $properties = $style ? '<w:pPr><w:pStyle w:val="'.$style.'"/></w:pPr>' : '';
+        if ($style === 'CompactBullet') {
+            $text = '- '.$text;
+        }
 
         return '<w:p>'.$properties.'<w:r><w:t xml:space="preserve">'.$this->xml($text).'</w:t></w:r></w:p>';
     }
@@ -126,8 +141,16 @@ final class DocxReportRenderer
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-            .'<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:rFonts w:ascii="Aptos" w:hAnsi="Aptos"/><w:sz w:val="20"/></w:rPr></w:style>'
-            .'<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:color w:val="A56A00"/><w:sz w:val="28"/></w:rPr></w:style>'
+            .'<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Aptos" w:hAnsi="Aptos"/><w:color w:val="243047"/><w:sz w:val="19"/></w:rPr></w:rPrDefault></w:docDefaults>'
+            .'<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr><w:spacing w:after="90" w:line="250" w:lineRule="auto"/></w:pPr><w:rPr><w:rFonts w:ascii="Aptos" w:hAnsi="Aptos"/><w:color w:val="243047"/><w:sz w:val="19"/></w:rPr></w:style>'
+            .'<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="80"/><w:pBdr><w:bottom w:val="single" w:sz="18" w:space="8" w:color="D8A323"/></w:pBdr></w:pPr><w:rPr><w:b/><w:color w:val="111827"/><w:sz w:val="40"/></w:rPr></w:style>'
+            .'<w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="40"/></w:pPr><w:rPr><w:color w:val="A56A00"/><w:sz w:val="21"/></w:rPr></w:style>'
+            .'<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="250" w:after="90"/><w:pBdr><w:left w:val="single" w:sz="22" w:space="8" w:color="D8A323"/></w:pBdr></w:pPr><w:rPr><w:b/><w:color w:val="111827"/><w:sz w:val="24"/></w:rPr></w:style>'
+            .'<w:style w:type="paragraph" w:styleId="KeyFinding"><w:name w:val="Key Finding"/><w:basedOn w:val="Normal"/><w:pPr><w:keepNext/><w:spacing w:before="45" w:after="70"/><w:shd w:val="clear" w:fill="F2F5F9"/></w:pPr><w:rPr><w:b/><w:color w:val="162033"/><w:sz w:val="20"/></w:rPr></w:style>'
+            .'<w:style w:type="paragraph" w:styleId="MatrixRow"><w:name w:val="Matrix Row"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="30"/><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="2" w:color="E4E8EF"/></w:pBdr></w:pPr><w:rPr><w:rFonts w:ascii="Aptos Mono" w:hAnsi="Aptos Mono"/><w:sz w:val="17"/></w:rPr></w:style>'
+            .'<w:style w:type="paragraph" w:styleId="CompactBullet"><w:name w:val="Compact Bullet"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="45"/><w:ind w:left="300" w:hanging="220"/></w:pPr><w:rPr><w:sz w:val="18"/></w:rPr></w:style>'
+            .'<w:style w:type="paragraph" w:styleId="Caption"><w:name w:val="Caption"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="45"/></w:pPr><w:rPr><w:color w:val="667085"/><w:sz w:val="16"/></w:rPr></w:style>'
+            .'<w:style w:type="paragraph" w:styleId="Notice"><w:name w:val="Notice"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="90" w:after="90"/><w:shd w:val="clear" w:fill="FFF5D9"/><w:pBdr><w:left w:val="single" w:sz="18" w:space="8" w:color="D8A323"/></w:pBdr></w:pPr><w:rPr><w:b/><w:color w:val="6F4F09"/><w:sz w:val="17"/></w:rPr></w:style>'
             .'<w:style w:type="character" w:styleId="Hyperlink"><w:name w:val="Hyperlink"/><w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/></w:rPr></w:style>'
             .'</w:styles>';
     }
