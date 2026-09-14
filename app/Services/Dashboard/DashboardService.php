@@ -5,7 +5,9 @@ namespace App\Services\Dashboard;
 use App\Models\MacroBrief;
 use App\Services\Analysis\BiasScorer;
 use App\Services\Analysis\LatestBiasSnapshots;
+use App\Services\Market\CandlePeriod;
 use App\Services\Market\MarketMode;
+use Illuminate\Support\Str;
 
 final class DashboardService
 {
@@ -37,7 +39,9 @@ final class DashboardService
             $frames[] = [
                 'key' => $key, 'label' => $settings['label'], 'score' => $snapshot->score, 'bias' => $snapshot->label,
                 'component_scores' => $snapshot->component_scores, 'metrics' => $snapshot->metrics, 'explanations' => $snapshot->explanations,
-                'data_as_of' => $snapshot->data_as_of->toIso8601String(), 'stale' => $stale, 'status' => $stale ? 'stale' : 'ready',
+                'data_as_of' => $snapshot->data_as_of->toIso8601String(),
+                'completed_at' => CandlePeriod::closesAt($snapshot->data_as_of, $key)->toIso8601String(),
+                'stale' => $stale, 'status' => $stale ? 'stale' : 'ready',
             ];
         }
 
@@ -45,18 +49,34 @@ final class DashboardService
         $macro = MacroBrief::query()->latest('generated_at')->first();
         $fiveMinute = $latest->get('5m');
         $daily = $latest->get('1d');
-        $price = $fiveMinute?->metrics['close'] ?? $daily?->metrics['close'] ?? null;
+        $quoteSnapshot = $fiveMinute ?? $daily;
+        $price = $quoteSnapshot?->metrics['close'] ?? null;
         $macroData = $this->macroData($macro);
+        $configuredProvider = (string) config('horizon.market_provider');
 
         return [
             'mode' => $overall ? 'live' : 'unavailable',
             'notice' => $overall ? null : 'Live analysis is incomplete. Waiting for required 1h, 4h, 1d and one additional timeframe.',
             'symbol' => config('horizon.symbol'),
-            'quote' => ['price' => $price, 'currency' => 'USD', 'change' => null, 'change_percent' => null, 'as_of' => $fiveMinute?->data_as_of?->toIso8601String() ?? $daily?->data_as_of?->toIso8601String()],
+            'quote' => [
+                'price' => $price,
+                'currency' => 'USD',
+                'change' => null,
+                'change_percent' => null,
+                'as_of' => $quoteSnapshot?->data_as_of?->toIso8601String(),
+                'completed_at' => $quoteSnapshot
+                    ? CandlePeriod::closesAt($quoteSnapshot->data_as_of, $quoteSnapshot->timeframe)->toIso8601String()
+                    : null,
+            ],
             'overall' => $overall ? ['score' => $overall['score'], 'label' => $overall['label'], 'summary' => 'Deterministic weighted agreement across available timeframes.', 'generated_at' => $latest->max('generated_at')?->toIso8601String(), 'stale' => collect($frames)->contains('stale', true)] : null,
             'timeframes' => $frames,
             'macro' => $macroData,
-            'system' => ['market_provider' => config('horizon.market_provider'), 'ai_provider' => 'Gemini + Groq GPT-OSS', 'licensing_gate_applied' => false],
+            'system' => [
+                'market_provider' => $configuredProvider,
+                'market_provider_label' => $quoteSnapshot?->provider ?? Str::headline($configuredProvider),
+                'ai_provider' => 'Gemini + Groq GPT-OSS',
+                'licensing_gate_applied' => false,
+            ],
         ];
     }
 

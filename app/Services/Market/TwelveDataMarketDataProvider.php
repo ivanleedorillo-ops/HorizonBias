@@ -111,7 +111,11 @@ final class TwelveDataMarketDataProvider implements MarketDataProvider
 
         usort($candles, fn (Candle $a, Candle $b) => $a->openedAt <=> $b->openedAt);
         $candles = array_values(array_filter($candles, fn (Candle $candle, int $index) => $index === 0 || $candle->openedAt->notEqualTo($candles[$index - 1]->openedAt), ARRAY_FILTER_USE_BOTH));
-        array_pop($candles); // Provider's newest bar may still be forming.
+        $completedBefore = now('UTC')->subSeconds(max(0, (int) config('horizon.market_data.close_grace_seconds', 30)));
+        $candles = array_values(array_filter(
+            $candles,
+            fn (Candle $candle) => CandlePeriod::closesAt($candle->openedAt, $timeframe)->lessThanOrEqualTo($completedBefore),
+        ));
 
         if (count($candles) < 205) {
             throw new RuntimeException('Market data provider returned fewer than 205 completed candles.');

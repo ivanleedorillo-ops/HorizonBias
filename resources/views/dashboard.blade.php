@@ -72,6 +72,28 @@
                     <span x-text="data.mode === 'live' ? 'Live' : 'Demo'"></span>
                 </span>
 
+                <!-- Floating Monitor Button -->
+                <button type="button"
+                        id="floating-monitor-btn"
+                        @click="openFloatingMonitor()"
+                        class="btn-monitor"
+                        :class="floatingOpen ? 'is-active' : ''"
+                        :disabled="floatingOpening"
+                        :aria-busy="floatingOpening ? 'true' : 'false'"
+                        :aria-pressed="floatingOpen ? 'true' : 'false'"
+                        :aria-label="floatingOpening ? 'Opening Floating Bias Monitor' : (floatingOpen ? 'Focus Floating Bias Monitor' : 'Open Floating Bias Monitor')"
+                        :title="floatingOpening ? 'Opening Floating Bias Monitor' : (floatingOpen ? 'Focus Floating Bias Monitor' : 'Open Floating Bias Monitor')"
+                        aria-label="Open Floating Bias Monitor"
+                        aria-pressed="false"
+                        aria-busy="false"
+                        title="Open Floating Bias Monitor">
+                    <svg class="h-3.5 w-3.5 shrink-0" :class="floatingOpening ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 11h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4a1 1 0 011-1z" />
+                    </svg>
+                    <span class="hidden sm:inline" x-text="floatingOpening ? 'Opening…' : (floatingOpen ? 'Monitor Open' : 'Floating Monitor')">Floating Monitor</span>
+                </button>
+
                 <!-- Theme Toggle Button -->
                 <button type="button"
                         @click="toggleTheme()"
@@ -99,6 +121,19 @@
         </div>
     </header>
 
+    <!-- Popup Error Banner -->
+    <div x-show="floatingError" x-cloak class="border-b border-[var(--color-bearish-border)] bg-[var(--color-bearish-bg)] transition-colors">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-xs text-[var(--color-bearish-text)] sm:px-6 lg:px-8">
+            <p class="flex items-center gap-2">
+                <span class="status-dot shrink-0 text-[var(--color-bearish-text)]"></span>
+                <span x-text="floatingError"></span>
+            </p>
+            <button type="button" @click="floatingError = null" class="font-semibold underline underline-offset-2 hover:opacity-80 shrink-0" aria-label="Dismiss message">
+                Dismiss
+            </button>
+        </div>
+    </div>
+
     <!-- Notice / Offline / Demo Warning Banner -->
     <div x-show="data.notice || connectionIssue" x-cloak class="border-b border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] transition-colors">
         <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-xs text-[var(--color-neutral-text)] sm:px-6 lg:px-8">
@@ -122,7 +157,7 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="eyebrow text-[var(--color-gold-accent)]">Asset Quote</span>
-                            <span class="rounded bg-[var(--color-bg-page-secondary)] border border-[var(--color-border-subtle)] px-2 py-0.5 text-xs text-[var(--color-text-muted)] font-medium">OANDA Feed</span>
+                            <span class="rounded bg-[var(--color-bg-page-secondary)] border border-[var(--color-border-subtle)] px-2 py-0.5 text-xs text-[var(--color-text-muted)] font-medium" x-text="(data.system?.market_provider_label || 'Stored market data') + ' Feed'"></span>
                         </div>
                         <div class="mt-2 flex items-baseline gap-2">
                             <h1 class="text-3xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-4xl">XAU/USD</h1>
@@ -135,7 +170,7 @@
                                 <span x-text="'(' + (data.quote.change_percent >= 0 ? '+' : '') + formatNumber(data.quote.change_percent, 2) + '%)'" class="ml-1"></span>
                             </p>
                         </div>
-                        <p class="mt-2 text-xs text-[var(--color-text-muted)]">Data as of: <span class="font-medium text-[var(--color-text-secondary)]" x-text="formatTime(data.quote.as_of)"></span></p>
+                        <p class="mt-2 text-xs text-[var(--color-text-muted)]">Technical data completed through: <span class="font-medium text-[var(--color-text-secondary)]" x-text="formatTime(data.quote.completed_at || data.quote.as_of)"></span></p>
                     </div>
 
                     <!-- Market Context Details Column -->
@@ -341,13 +376,20 @@
                                         <span class="text-xs font-semibold text-[var(--color-text-secondary)]" x-text="row.scope"></span>
                                         <div class="flex justify-end gap-1">
                                             <template x-for="point in row.points" :key="point.at">
-                                                <span class="h-4 min-w-1 flex-1 rounded-sm border" :class="biasBadgeClass(point.label)" :title="`${formatTime(point.at)} — ${point.label} (${point.score})`" :aria-label="`${row.scope}, ${point.label}, score ${point.score}`"></span>
+                                                <span class="heatmap-cell h-4 min-w-1 flex-1 rounded-sm border" :class="biasBadgeClass(point.label)" :title="`${formatTime(point.at)} — ${point.label} (${point.score})`" :aria-label="`${row.scope}, ${point.label}, score ${point.score}`"></span>
                                             </template>
                                             <span x-show="!row.points.length" class="text-xs text-[var(--color-text-muted)]">No observations</span>
                                         </div>
                                     </div>
                                 </template>
                             </div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-[var(--color-border-subtle)] pt-3 text-xs text-[var(--color-text-muted)]" aria-label="Heatmap color legend">
+                            <span class="inline-flex items-center gap-1.5"><i class="heatmap-cell bias-strong-bullish h-2.5 w-2.5 rounded-sm border" aria-hidden="true"></i>Strong bullish</span>
+                            <span class="inline-flex items-center gap-1.5"><i class="heatmap-cell bias-bullish h-2.5 w-2.5 rounded-sm border" aria-hidden="true"></i>Bullish</span>
+                            <span class="inline-flex items-center gap-1.5"><i class="heatmap-cell bias-neutral h-2.5 w-2.5 rounded-sm border" aria-hidden="true"></i>Neutral</span>
+                            <span class="inline-flex items-center gap-1.5"><i class="heatmap-cell bias-bearish h-2.5 w-2.5 rounded-sm border" aria-hidden="true"></i>Bearish</span>
+                            <span class="inline-flex items-center gap-1.5"><i class="heatmap-cell bias-strong-bearish h-2.5 w-2.5 rounded-sm border" aria-hidden="true"></i>Strong bearish</span>
                         </div>
                     </div>
 
@@ -478,7 +520,7 @@
                         </div>
 
                         <div class="border-t border-[var(--color-border-subtle)] pt-3 text-xs text-[var(--color-text-muted)]">
-                            Completed candle: <span class="text-[var(--color-text-secondary)] font-medium" x-text="formatTime(selected.data_as_of)"></span>
+                            Candle completed: <span class="text-[var(--color-text-secondary)] font-medium" x-text="formatTime(selected.completed_at || selected.data_as_of)"></span>
                         </div>
                     </div>
                 </template>
@@ -684,5 +726,167 @@
             </div>
         </div>
     </footer>
+    <!-- Dedicated Floating Bias Monitor Template -->
+    <template id="floating-monitor-template">
+        <div class="monitor-shell" id="monitor-root">
+            <!-- Header -->
+            <header class="flex items-center justify-between gap-2 border-b border-[var(--color-border)] pb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="grid h-7 w-7 place-items-center overflow-hidden rounded-lg border border-[var(--color-gold-border)] bg-[var(--color-gold-bg)] p-0.5 shrink-0">
+                        <img src="{{ asset('images/horizonbias-logo.png') }}" alt="" class="h-full w-full object-contain" width="28" height="28">
+                    </span>
+                    <div>
+                        <strong class="block text-xs font-bold tracking-tight text-[var(--color-text-primary)] leading-tight">Horizon<span class="text-[var(--color-gold-accent)]">Bias</span></strong>
+                        <span class="block text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] leading-tight">XAU/USD Monitor</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span data-monitor="mode-badge" class="monitor-badge">Demo</span>
+                    <span data-monitor="freshness-badge" class="monitor-badge">Fresh</span>
+                </div>
+            </header>
+
+            <!-- Fallback standard popup banner -->
+            <div data-monitor="fallback-banner" class="hidden rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-2 text-[11px] text-[var(--color-neutral-text)] leading-snug">
+                <strong class="font-bold">Standard popup:</strong> Always-on-top Document Picture-in-Picture is unavailable in this browser.
+            </div>
+
+            <!-- Spot Quote Card -->
+            <div class="monitor-panel">
+                <div class="flex items-baseline justify-between gap-2">
+                    <span class="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Spot Gold</span>
+                    <span data-monitor="quote-asof" class="text-[10px] text-[var(--color-text-muted)] tabular-nums">Awaiting candle</span>
+                </div>
+                <div class="mt-1 flex items-baseline justify-between gap-2">
+                    <div class="flex items-baseline gap-1.5">
+                        <span data-monitor="quote-price" class="text-2xl font-extrabold tracking-tight tabular-nums text-[var(--color-text-primary)]">$—</span>
+                        <span data-monitor="quote-currency" class="text-xs font-bold text-[var(--color-gold-accent)]">USD</span>
+                    </div>
+                    <div data-monitor="quote-change" class="text-xs font-semibold tabular-nums text-[var(--color-text-muted)]">—</div>
+                </div>
+            </div>
+
+            <!-- Overall Bias Card -->
+            <div class="monitor-panel">
+                <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                    <span>Overall Bias</span>
+                    <span data-monitor="overall-status" class="text-[10px] font-medium">Weighted consensus</span>
+                </div>
+                <div class="mt-1.5 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span data-monitor="overall-badge" class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide">
+                            —
+                        </span>
+                    </div>
+                    <div class="text-right">
+                        <div class="flex items-baseline justify-end gap-1">
+                            <span class="text-[10px] text-[var(--color-text-muted)] font-medium">Score</span>
+                            <span data-monitor="overall-score" class="text-lg font-black tabular-nums text-[var(--color-text-primary)]">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7-Timeframe Matrix -->
+            <div class="monitor-panel space-y-1.5">
+                <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                    <span>Timeframe Matrix</span>
+                    <span>7 Horizons</span>
+                </div>
+                <div class="monitor-tf-grid">
+                    <div class="monitor-tf-item" data-tf="5m" role="group">
+                        <span class="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">5m</span>
+                        <span data-monitor="tf-score-5m" class="text-xs font-black tabular-nums my-0.5 text-[var(--color-text-primary)]">—</span>
+                        <span data-monitor="tf-badge-5m" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border">N</span>
+                        <span data-monitor="tf-status-5m" class="hidden text-[8px] font-bold uppercase text-[var(--color-neutral-text)] tracking-wider mt-0.5"></span>
+                    </div>
+                    <div class="monitor-tf-item" data-tf="15m" role="group">
+                        <span class="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">15m</span>
+                        <span data-monitor="tf-score-15m" class="text-xs font-black tabular-nums my-0.5 text-[var(--color-text-primary)]">—</span>
+                        <span data-monitor="tf-badge-15m" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border">N</span>
+                        <span data-monitor="tf-status-15m" class="hidden text-[8px] font-bold uppercase text-[var(--color-neutral-text)] tracking-wider mt-0.5"></span>
+                    </div>
+                    <div class="monitor-tf-item" data-tf="1h" role="group">
+                        <span class="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">1h</span>
+                        <span data-monitor="tf-score-1h" class="text-xs font-black tabular-nums my-0.5 text-[var(--color-text-primary)]">—</span>
+                        <span data-monitor="tf-badge-1h" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border">N</span>
+                        <span data-monitor="tf-status-1h" class="hidden text-[8px] font-bold uppercase text-[var(--color-neutral-text)] tracking-wider mt-0.5"></span>
+                    </div>
+                    <div class="monitor-tf-item" data-tf="4h" role="group">
+                        <span class="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">4h</span>
+                        <span data-monitor="tf-score-4h" class="text-xs font-black tabular-nums my-0.5 text-[var(--color-text-primary)]">—</span>
+                        <span data-monitor="tf-badge-4h" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border">N</span>
+                        <span data-monitor="tf-status-4h" class="hidden text-[8px] font-bold uppercase text-[var(--color-neutral-text)] tracking-wider mt-0.5"></span>
+                    </div>
+                    <div class="monitor-tf-item" data-tf="1d" role="group">
+                        <span class="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">1d</span>
+                        <span data-monitor="tf-score-1d" class="text-xs font-black tabular-nums my-0.5 text-[var(--color-text-primary)]">—</span>
+                        <span data-monitor="tf-badge-1d" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border">N</span>
+                        <span data-monitor="tf-status-1d" class="hidden text-[8px] font-bold uppercase text-[var(--color-neutral-text)] tracking-wider mt-0.5"></span>
+                    </div>
+                    <div class="monitor-tf-item" data-tf="1w" role="group">
+                        <span class="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">1w</span>
+                        <span data-monitor="tf-score-1w" class="text-xs font-black tabular-nums my-0.5 text-[var(--color-text-primary)]">—</span>
+                        <span data-monitor="tf-badge-1w" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border">N</span>
+                        <span data-monitor="tf-status-1w" class="hidden text-[8px] font-bold uppercase text-[var(--color-neutral-text)] tracking-wider mt-0.5"></span>
+                    </div>
+                    <div class="monitor-tf-item is-span-2" data-tf="1mo" role="group">
+                        <span class="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">1mo</span>
+                        <span data-monitor="tf-score-1mo" class="text-xs font-black tabular-nums my-0.5 text-[var(--color-text-primary)]">—</span>
+                        <span data-monitor="tf-badge-1mo" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border">N</span>
+                        <span data-monitor="tf-status-1mo" class="hidden text-[8px] font-bold uppercase text-[var(--color-neutral-text)] tracking-wider mt-0.5"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Consensus Card -->
+            <div class="monitor-panel space-y-1.5">
+                <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                    <span>AI Macro Consensus</span>
+                    <span class="text-[10px] text-[var(--color-gold-accent)] font-bold">Gemini + Groq</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <span data-monitor="ai-bias" class="inline-flex items-center rounded border px-2 py-0.5 text-xs font-bold uppercase">—</span>
+                    <span data-monitor="ai-agreement" class="text-[11px] font-semibold text-[var(--color-text-secondary)]">—</span>
+                    <span data-monitor="ai-confidence" class="text-[11px] font-bold tabular-nums text-[var(--color-gold-accent)]">—</span>
+                    <span data-monitor="ai-risk" class="inline-flex items-center rounded border border-[var(--color-border)] px-1.5 py-0.5 text-[10px] font-medium uppercase text-[var(--color-text-muted)]">—</span>
+                </div>
+                <div data-monitor="ai-partial" class="hidden rounded border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-1.5 text-[10px] text-[var(--color-neutral-text)] leading-snug">
+                </div>
+                <div data-monitor="ai-stale" class="hidden rounded border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-1.5 text-[10px] text-[var(--color-neutral-text)] leading-snug">
+                </div>
+                <p data-monitor="ai-summary" class="text-[11px] leading-relaxed text-[var(--color-text-secondary)] max-h-16 overflow-y-auto pt-0.5">
+                    Dual-AI context is not available yet.
+                </p>
+                <div data-monitor="ai-time" class="hidden text-[10px] text-[var(--color-text-muted)] tabular-nums pt-0.5"></div>
+            </div>
+
+            <!-- Footer & Actions -->
+            <footer class="mt-auto space-y-2 pt-1 border-t border-[var(--color-border-subtle)]">
+                <!-- Offline / Stale Warning -->
+                <div data-monitor="connection-warning" class="hidden rounded-lg border border-[var(--color-bearish-border)] bg-[var(--color-bearish-bg)] p-2 text-[10px] text-[var(--color-bearish-text)]">
+                    Connection interrupted — retaining last confirmed snapshot in memory.
+                </div>
+
+                <div class="flex items-center justify-between text-[10px] text-[var(--color-text-muted)]">
+                    <span>Dashboard checked: <strong data-monitor="last-refresh" class="tabular-nums font-semibold text-[var(--color-text-secondary)]">—</strong></span>
+                    <span>Closed-bar UTC</span>
+                </div>
+
+                <p class="text-[10px] leading-snug text-[var(--color-text-muted)]">
+                    Educational bias only — not a trading signal or recommendation. Verify independently.
+                </p>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" data-action="focus-dashboard" class="btn-monitor !bg-[var(--color-gold-bg)] !text-[var(--color-gold-accent)] !border-[var(--color-gold-border)] hover:!border-[var(--color-gold-accent)] justify-center flex-1 font-semibold">
+                        Return to Dashboard
+                    </button>
+                    <button type="button" data-action="close-monitor" class="btn-monitor justify-center px-4 font-medium">
+                        Close
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </template>
 </body>
 </html>

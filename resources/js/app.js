@@ -1,6 +1,7 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
+import { buildMonitorViewModel } from './floating-monitor';
 
 window.Alpine = Alpine;
 
@@ -142,12 +143,23 @@ const horizonDashboard = () => {
             groq: false,
             evidence: false,
         },
+        floatingWindow: null,
+        floatingMode: null,
+        floatingOpen: false,
+        floatingOpening: false,
+        floatingError: null,
+        floatingSupported: typeof window !== 'undefined' && 'documentPictureInPicture' in window && typeof window.documentPictureInPicture?.requestWindow === 'function',
         init() {
             this.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
             window.addEventListener('horizon-theme-changed', (e) => {
                 this.theme = e.detail.theme;
+                this.syncFloatingTheme();
                 this.$nextTick(() => this.renderHistoryChart());
             });
+
+            // Close floating monitor if dashboard tab closes
+            window.addEventListener('pagehide', () => this.closeFloatingMonitor());
+            window.addEventListener('beforeunload', () => this.closeFloatingMonitor());
 
             // Initialize TradingView chart with current active theme
             initTradingView(this.theme);
@@ -161,6 +173,7 @@ const horizonDashboard = () => {
         },
         toggleTheme() {
             this.theme = themeManager.toggle();
+            this.syncFloatingTheme();
         },
         toggleAiSection(section) {
             this.expandedAi[section] = !this.expandedAi[section];
@@ -170,6 +183,375 @@ const horizonDashboard = () => {
         },
         toggleEvidenceDetails() {
             this.showEvidenceDetails = !this.showEvidenceDetails;
+        },
+        async openFloatingMonitor() {
+            // Guard against rapid duplicate clicks while opening
+            if (this.floatingOpening) {
+                return;
+            }
+
+            // If an active window already exists, bring it to focus
+            if (this.floatingWindow && !this.floatingWindow.closed) {
+                try {
+                    this.floatingWindow.focus();
+                } catch (_) {}
+                return;
+            }
+
+            this.floatingOpening = true;
+            this.floatingError = null;
+
+            try {
+                // Feature detection for Document Picture-in-Picture
+                if ('documentPictureInPicture' in window && typeof window.documentPictureInPicture?.requestWindow === 'function') {
+                    try {
+                        await this.openDocumentPictureInPicture();
+                        return;
+                    } catch (err) {
+                        // Fall back cleanly if user denied or requestWindow failed
+                        console.warn('Document Picture-in-Picture failed or was denied, opening popup fallback:', err);
+                    }
+                }
+
+                // Fallback for unsupported browsers
+                this.openPopupMonitor();
+            } catch (_) {
+                this.cleanupFloatingMonitor();
+                this.floatingError = 'The Floating Bias Monitor could not be opened. Check your browser window permissions and try again.';
+            } finally {
+                this.floatingOpening = false;
+            }
+        },
+        async openDocumentPictureInPicture() {
+            const pipWindow = await window.documentPictureInPicture.requestWindow({
+                width: 380,
+                height: 560,
+            });
+
+            try {
+                this.floatingWindow = pipWindow;
+                this.floatingMode = 'pip';
+                this.floatingOpen = true;
+
+                pipWindow.addEventListener('pagehide', () => {
+                    this.cleanupFloatingMonitor(pipWindow);
+                });
+
+                this.prepareFloatingDocument(pipWindow.document, 'pip');
+                this.renderFloatingMonitor();
+            } catch (err) {
+                // Partial PiP failure: close orphan window and cleanup state before fallback
+                try {
+                    pipWindow.close();
+                } catch (_) {}
+                this.cleanupFloatingMonitor(pipWindow);
+                throw err;
+            }
+        },
+        openPopupMonitor() {
+            const width = 380;
+            const height = 560;
+            const left = Math.max(0, Math.round((window.screen.width - width) / 2));
+            const top = Math.max(0, Math.round((window.screen.height - height) / 2));
+
+            let popup = null;
+            try {
+                popup = window.open(
+                    '',
+                    'horizonbias_monitor',
+                    `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+                );
+            } catch (_) {}
+
+            if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                this.floatingError = 'Floating monitor popup was blocked by your browser. Please allow popups for HorizonBias.';
+                this.cleanupFloatingMonitor();
+                return;
+            }
+
+            try {
+                this.floatingWindow = popup;
+                this.floatingMode = 'popup';
+                this.floatingOpen = true;
+
+                popup.addEventListener('pagehide', () => {
+                    this.cleanupFloatingMonitor(popup);
+                });
+
+                this.prepareFloatingDocument(popup.document, 'popup');
+                this.renderFloatingMonitor();
+            } catch (err) {
+                try {
+                    popup.close();
+                } catch (_) {}
+                this.cleanupFloatingMonitor(popup);
+                throw err;
+            }
+        },
+        prepareFloatingDocument(doc, mode = 'pip') {
+            doc.title = 'HorizonBias — XAU/USD Monitor';
+
+            // Meta tags
+            if (!doc.querySelector('meta[charset]')) {
+                const metaCharset = doc.createElement('meta');
+                metaCharset.setAttribute('charset', 'utf-8');
+                doc.head.appendChild(metaCharset);
+            }
+            if (!doc.querySelector('meta[name="viewport"]')) {
+                const metaVp = doc.createElement('meta');
+                metaVp.name = 'viewport';
+                metaVp.content = 'width=device-width, initial-scale=1';
+                doc.head.appendChild(metaVp);
+            }
+
+            // Copy stylesheets safely
+            try {
+                [...document.styleSheets].forEach((sheet) => {
+                    try {
+                        if (sheet.href) {
+                            const link = doc.createElement('link');
+                            link.rel = 'stylesheet';
+                            link.type = sheet.type || 'text/css';
+                            link.media = sheet.media?.mediaText || 'all';
+                            link.href = sheet.href;
+                            doc.head.appendChild(link);
+                        } else if (sheet.cssRules) {
+                            const style = doc.createElement('style');
+                            style.textContent = [...sheet.cssRules].map(r => r.cssText).join('\n');
+                            doc.head.appendChild(style);
+                        }
+                    } catch (_) {
+                        // Inaccessible or cross-origin stylesheet rules safely ignored
+                    }
+                });
+            } catch (_) {}
+
+            doc.documentElement.className = this.theme === 'dark' ? 'dark' : '';
+            doc.documentElement.style.colorScheme = this.theme;
+            doc.body.className = 'bg-[var(--color-bg-page)] text-[var(--color-text-primary)] antialiased m-0 p-0';
+
+            // Clone dedicated template
+            const template = document.getElementById('floating-monitor-template');
+            if (template) {
+                const clone = template.content.cloneNode(true);
+                doc.body.replaceChildren(clone);
+            }
+
+            // Bind actions safely
+            const returnBtn = doc.querySelector('[data-action="focus-dashboard"]');
+            if (returnBtn) {
+                returnBtn.addEventListener('click', () => this.focusDashboardFromMonitor());
+            }
+            const closeBtn = doc.querySelector('[data-action="close-monitor"]');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.closeFloatingMonitor());
+            }
+
+            // Fallback banner visibility
+            const fallbackBanner = doc.querySelector('[data-monitor="fallback-banner"]');
+            if (fallbackBanner) {
+                if (mode === 'popup') {
+                    fallbackBanner.classList.remove('hidden');
+                } else {
+                    fallbackBanner.classList.add('hidden');
+                }
+            }
+        },
+        renderFloatingMonitor() {
+            if (!this.floatingWindow || this.floatingWindow.closed) return;
+            const doc = this.floatingWindow.document;
+            if (!doc || !doc.body) return;
+
+            const vm = buildMonitorViewModel(this.data, this.connectionIssue);
+
+            // Mode badge
+            const modeBadge = doc.querySelector('[data-monitor="mode-badge"]');
+            if (modeBadge) {
+                modeBadge.textContent = vm.status.modeLabel;
+                modeBadge.className = 'monitor-badge ' + vm.status.modeClass;
+            }
+
+            // Freshness badge
+            const freshBadge = doc.querySelector('[data-monitor="freshness-badge"]');
+            if (freshBadge) {
+                freshBadge.textContent = vm.status.freshnessLabel;
+                freshBadge.className = 'monitor-badge ' + vm.status.freshnessClass;
+            }
+
+            // Spot Quote
+            const priceEl = doc.querySelector('[data-monitor="quote-price"]');
+            if (priceEl) {
+                priceEl.textContent = vm.quote.priceDisplay;
+            }
+            const currEl = doc.querySelector('[data-monitor="quote-currency"]');
+            if (currEl) {
+                currEl.textContent = vm.quote.currencyDisplay;
+            }
+            const asofEl = doc.querySelector('[data-monitor="quote-asof"]');
+            if (asofEl) {
+                asofEl.textContent = vm.quote.asOfDisplay;
+            }
+            const changeEl = doc.querySelector('[data-monitor="quote-change"]');
+            if (changeEl) {
+                changeEl.textContent = vm.quote.changeDisplay;
+                changeEl.className = 'text-xs font-semibold tabular-nums ' + vm.quote.changeClass;
+            }
+
+            // Overall Bias
+            const overallBadge = doc.querySelector('[data-monitor="overall-badge"]');
+            const overallScore = doc.querySelector('[data-monitor="overall-score"]');
+            const overallStatus = doc.querySelector('[data-monitor="overall-status"]');
+
+            if (overallBadge) {
+                overallBadge.textContent = vm.overall.label;
+                overallBadge.className = 'inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide ' + vm.overall.badgeClass;
+            }
+            if (overallScore) {
+                overallScore.textContent = vm.overall.scoreDisplay;
+            }
+            if (overallStatus) {
+                overallStatus.textContent = vm.overall.statusDisplay;
+            }
+
+            // 7 Timeframes
+            vm.timeframes.forEach((tf) => {
+                const scoreEl = doc.querySelector(`[data-monitor="tf-score-${tf.key}"]`);
+                const badgeEl = doc.querySelector(`[data-monitor="tf-badge-${tf.key}"]`);
+                const statusEl = doc.querySelector(`[data-monitor="tf-status-${tf.key}"]`);
+                const itemEl = doc.querySelector(`[data-tf="${tf.key}"]`);
+
+                if (scoreEl) scoreEl.textContent = tf.scoreDisplay;
+                if (badgeEl) {
+                    badgeEl.textContent = tf.compactBias;
+                    badgeEl.className = `px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${tf.badgeClass}`;
+                }
+                if (statusEl) {
+                    if (tf.isStale) {
+                        statusEl.textContent = 'Stale';
+                        statusEl.classList.remove('hidden');
+                    } else if (tf.isUnavailable) {
+                        statusEl.textContent = 'Unavailable';
+                        statusEl.classList.remove('hidden');
+                    } else {
+                        statusEl.classList.add('hidden');
+                    }
+                }
+                if (itemEl) {
+                    itemEl.setAttribute('title', tf.title);
+                    itemEl.setAttribute('aria-label', tf.ariaLabel);
+                    if (tf.isStale || tf.isUnavailable) {
+                        itemEl.classList.add('opacity-85');
+                    } else {
+                        itemEl.classList.remove('opacity-85');
+                    }
+                }
+            });
+
+            // AI Consensus
+            const aiBiasEl = doc.querySelector('[data-monitor="ai-bias"]');
+            const aiAgreeEl = doc.querySelector('[data-monitor="ai-agreement"]');
+            const aiConfEl = doc.querySelector('[data-monitor="ai-confidence"]');
+            const aiRiskEl = doc.querySelector('[data-monitor="ai-risk"]');
+            const aiPartialEl = doc.querySelector('[data-monitor="ai-partial"]');
+            const aiStaleEl = doc.querySelector('[data-monitor="ai-stale"]');
+            const aiSummaryEl = doc.querySelector('[data-monitor="ai-summary"]');
+            const aiTimeEl = doc.querySelector('[data-monitor="ai-time"]');
+
+            if (aiBiasEl) {
+                aiBiasEl.textContent = vm.ai.biasLabel;
+                aiBiasEl.className = 'inline-flex items-center rounded border px-2 py-0.5 text-xs font-bold uppercase ' + vm.ai.biasClass;
+            }
+            if (aiAgreeEl) {
+                aiAgreeEl.textContent = vm.ai.agreementLabel;
+            }
+            if (aiConfEl) {
+                aiConfEl.textContent = vm.ai.confidenceDisplay;
+            }
+            if (aiRiskEl) {
+                aiRiskEl.textContent = vm.ai.riskDisplay;
+            }
+
+            if (aiPartialEl) {
+                if (vm.ai.isPartial && vm.ai.partialNotice) {
+                    aiPartialEl.textContent = vm.ai.partialNotice;
+                    aiPartialEl.classList.remove('hidden');
+                } else {
+                    aiPartialEl.classList.add('hidden');
+                }
+            }
+
+            if (aiStaleEl) {
+                if (vm.ai.isStale && vm.ai.staleNotice) {
+                    aiStaleEl.textContent = vm.ai.staleNotice;
+                    aiStaleEl.classList.remove('hidden');
+                } else {
+                    aiStaleEl.classList.add('hidden');
+                }
+            }
+
+            if (aiSummaryEl) {
+                aiSummaryEl.textContent = vm.ai.summary;
+            }
+
+            if (aiTimeEl) {
+                if (vm.ai.timeDisplay) {
+                    aiTimeEl.textContent = vm.ai.timeDisplay;
+                    aiTimeEl.classList.remove('hidden');
+                } else {
+                    aiTimeEl.classList.add('hidden');
+                }
+            }
+
+            // Connection Warning
+            const connWarn = doc.querySelector('[data-monitor="connection-warning"]');
+            if (connWarn) {
+                if (vm.connectionIssue) {
+                    connWarn.classList.remove('hidden');
+                } else {
+                    connWarn.classList.add('hidden');
+                }
+            }
+
+            // Sync Time
+            const lastSync = doc.querySelector('[data-monitor="last-refresh"]');
+            if (lastSync) {
+                lastSync.textContent = new Intl.DateTimeFormat('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    timeZone: 'UTC',
+                    hour12: false,
+                }).format(new Date()) + ' UTC';
+            }
+        },
+        syncFloatingTheme() {
+            if (!this.floatingWindow || this.floatingWindow.closed) return;
+            const doc = this.floatingWindow.document;
+            if (!doc || !doc.documentElement) return;
+            doc.documentElement.className = this.theme === 'dark' ? 'dark' : '';
+            doc.documentElement.style.colorScheme = this.theme;
+        },
+        focusDashboardFromMonitor() {
+            try {
+                window.focus();
+            } catch (_) {}
+        },
+        closeFloatingMonitor() {
+            const win = this.floatingWindow;
+            if (win && !win.closed) {
+                try {
+                    win.close();
+                } catch (_) {}
+            }
+            this.cleanupFloatingMonitor(win);
+        },
+        cleanupFloatingMonitor(expectedWindow = null) {
+            if (expectedWindow && this.floatingWindow !== expectedWindow) {
+                return;
+            }
+            this.floatingWindow = null;
+            this.floatingMode = null;
+            this.floatingOpen = false;
         },
         async refresh() {
             if (this.refreshing) return;
@@ -187,6 +569,7 @@ const horizonDashboard = () => {
                 this.connectionIssue = true;
             } finally {
                 this.refreshing = false;
+                this.renderFloatingMonitor();
             }
         },
         async refreshHistory() {

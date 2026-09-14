@@ -57,6 +57,7 @@ MARKET_MODE=live
 MARKET_DATA_PROVIDER=twelve_data
 TWELVE_DATA_API_KEY=your_key
 MARKET_DATA_EXTERNAL_DISPLAY_LICENSED=false
+MARKET_CANDLE_CLOSE_GRACE_SECONDS=30
 ```
 
 Then populate data and keep it refreshed:
@@ -67,6 +68,8 @@ php artisan schedule:work
 ```
 
 Refresh one horizon with `php artisan market:refresh-bias --timeframe=4h`.
+
+Market timestamps use UTC. Provider candle timestamps represent the start of an interval, while the dashboard displays the calculated completion time. HorizonBias filters candles by their interval end plus `MARKET_CANDLE_CLOSE_GRACE_SECONDS` instead of blindly dropping the provider's newest row. The 5-minute and 15-minute refreshes run one minute after their candle boundaries so completed bars have time to be published. “Dashboard checked” is only the browser's latest stored-data check and is not a market-data timestamp.
 
 ## Free-tier dual-AI macro context
 
@@ -118,6 +121,26 @@ BIAS_HISTORY_MAX_CHART_POINTS=360
 ```
 
 Gemini and Groq receive the same compact Laravel-calculated historical summary in their existing scheduled requests. This feature does not add a third model or additional routine AI calls, and neither model can change historical statistics or the deterministic technical score.
+
+## Floating Bias Monitor
+
+The Floating Bias Monitor is a compact, responsive decision-support companion that traders can keep visible while operating in external charting software, broker platforms, or other browser tabs.
+
+- **Always-on-top Document Picture-in-Picture**: When the browser exposes the `documentPictureInPicture` API, clicking **Floating Monitor** opens an always-on-top window (initial size 380×560 px).
+- **Standard popup fallback**: When that API is unavailable or cannot be used, the monitor attempts to open as a standard compact popup labeled "Standard popup", with an explicit notice that always-on-top behavior is unavailable. Runtime feature detection is authoritative because browser support and permissions can change.
+- **User-click activation**: In accordance with browser security specifications, the monitor requires an explicit user click and is never opened automatically or on page load.
+- **Opener lifecycle synchronization**: Closing or navigating away from the dashboard parent tab automatically closes the floating window. Clicking the header button while the monitor is already active focuses the existing window rather than opening a duplicate.
+- **Zero additional provider overhead**: The monitor reads strictly from the dashboard's in-memory Alpine state and existing 60-second `/api/dashboard` polling loop. It makes no direct requests to Twelve Data, Gemini, or Groq, and creates no background polling loops.
+- **Data freshness & network resilience**: When a scheduled dashboard poll completes, the floating monitor immediately re-renders. If network connectivity fails, the monitor retains the last confirmed snapshot and displays an inline connection warning.
+- **Security & non-signal boundary**: Dynamic fields are bound strictly with safe DOM text assignment (`textContent`). The monitor adheres to the strict Content Security Policy, does not include the TradingView chart, and contains no buy/sell commands, entry prices, or trade execution.
+
+### Manual testing guide
+
+1. In a browser that supports Document Picture-in-Picture, navigate to `/dashboard` and click **Floating Monitor** in the top navigation bar.
+2. Confirm the 380×560 always-on-top window displays the current mode, spot quote, overall bias, 7-timeframe matrix, and AI consensus.
+3. Toggle the light/dark theme on the dashboard header and confirm the floating window immediately synchronizes its colors.
+4. Click **Return to Dashboard** inside the monitor to verify window focus returns to the main dashboard tab.
+5. In an unsupported browser or private browsing environment with PiP disabled, click **Floating Monitor** to confirm the standard popup fallback opens with the explanatory badge.
 
 ## Scheduler deployment
 

@@ -205,6 +205,61 @@
         color: var(--color-neutral-text);
     }
 
+    /* Heatmap cells need stronger fills than text badges, especially on light surfaces. */
+    .heatmap-cell {
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .heatmap-cell.bias-strong-bullish {
+        border-color: #047857;
+        background-color: #059669;
+    }
+
+    .heatmap-cell.bias-bullish {
+        border-color: #059669;
+        background-color: #6ee7b7;
+    }
+
+    .heatmap-cell.bias-neutral {
+        border-color: #d97706;
+        background-color: #fbbf24;
+    }
+
+    .heatmap-cell.bias-bearish {
+        border-color: #e11d48;
+        background-color: #fda4af;
+    }
+
+    .heatmap-cell.bias-strong-bearish {
+        border-color: #be123c;
+        background-color: #e11d48;
+    }
+
+    html.dark .heatmap-cell.bias-strong-bullish {
+        border-color: #34d399;
+        background-color: rgba(16, 185, 129, 0.68);
+    }
+
+    html.dark .heatmap-cell.bias-bullish {
+        border-color: rgba(52, 211, 153, 0.72);
+        background-color: rgba(16, 185, 129, 0.34);
+    }
+
+    html.dark .heatmap-cell.bias-neutral {
+        border-color: rgba(251, 191, 36, 0.78);
+        background-color: rgba(245, 158, 11, 0.42);
+    }
+
+    html.dark .heatmap-cell.bias-bearish {
+        border-color: rgba(251, 113, 133, 0.72);
+        background-color: rgba(244, 63, 94, 0.34);
+    }
+
+    html.dark .heatmap-cell.bias-strong-bearish {
+        border-color: #fb7185;
+        background-color: rgba(225, 29, 72, 0.68);
+    }
+
     .metric-row {
         display: flex;
         align-items: center;
@@ -312,6 +367,97 @@
         #tradingview-chart iframe {
             min-height: 580px !important;
         }
+    }
+
+    /* Floating Bias Monitor Styles */
+    .btn-monitor {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.625rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid var(--color-border);
+        background-color: var(--color-bg-surface);
+        color: var(--color-text-secondary);
+        transition: all 0.15s ease;
+        cursor: pointer;
+        user-select: none;
+    }
+    .btn-monitor:hover {
+        border-color: var(--color-border-strong);
+        color: var(--color-text-primary);
+        background-color: var(--color-bg-page-secondary);
+    }
+    .btn-monitor.is-active {
+        border-color: var(--color-gold-border);
+        background-color: var(--color-gold-bg);
+        color: var(--color-gold-accent);
+        box-shadow: 0 0 10px -2px rgba(217, 119, 6, 0.2);
+    }
+    html.dark .btn-monitor.is-active {
+        box-shadow: 0 0 12px -2px rgba(251, 191, 36, 0.25);
+    }
+
+    .monitor-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.875rem;
+        min-height: 100vh;
+        box-sizing: border-box;
+        background-color: var(--color-bg-page);
+        color: var(--color-text-primary);
+        font-family: var(--font-sans);
+    }
+
+    .monitor-panel {
+        background-color: var(--color-bg-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        box-shadow: var(--shadow-panel);
+    }
+
+    .monitor-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        border: 1px solid var(--color-border);
+    }
+
+    .monitor-tf-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.375rem;
+    }
+
+    .monitor-tf-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.375rem 0.25rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--color-border-subtle);
+        background-color: var(--color-bg-page-secondary);
+        text-align: center;
+        min-width: 0;
+    }
+
+    .monitor-tf-item.is-span-2 {
+        grid-column: span 2;
+    }
+
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
     }
 }
 

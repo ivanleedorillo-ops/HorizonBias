@@ -5,6 +5,9 @@ return [
     'market_mode' => env('MARKET_MODE', 'demo'),
     'market_provider' => env('MARKET_DATA_PROVIDER', 'twelve_data'),
     'external_display_licensed' => env('MARKET_DATA_EXTERNAL_DISPLAY_LICENSED', false),
+    'market_data' => [
+        'close_grace_seconds' => (int) env('MARKET_CANDLE_CLOSE_GRACE_SECONDS', 30),
+    ],
     'usd_proxy' => [
         'symbol' => env('USD_PROXY_SYMBOL', 'UUP'),
     ],

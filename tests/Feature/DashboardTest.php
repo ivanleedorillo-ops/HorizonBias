@@ -78,18 +78,19 @@ class DashboardTest extends TestCase
             ->assertJsonCount(7, 'timeframes')
             ->assertJsonStructure([
                 'mode', 'notice', 'symbol',
-                'quote' => ['price', 'currency', 'change', 'change_percent', 'as_of'],
+                'quote' => ['price', 'currency', 'change', 'change_percent', 'as_of', 'completed_at'],
                 'overall' => ['score', 'label', 'summary', 'generated_at', 'stale'],
-                'timeframes',
+                'timeframes' => [['completed_at']],
                 'macro' => [
                     'stance', 'gold_bias', 'usd_strength', 'risk_level', 'confidence',
                     'agreement', 'summary', 'limitations', 'analyses', 'provider_status',
                     'historical_assessment', 'events', 'generated_at', 'stale', 'status',
                 ],
-                'system',
+                'system' => ['market_provider', 'market_provider_label', 'ai_provider', 'licensing_gate_applied'],
             ]);
         $this->getJson('/api/dashboard')
             ->assertJsonCount(2, 'macro.analyses')
+            ->assertJsonPath('quote.completed_at', '2026-09-01T12:05:00+00:00')
             ->assertJsonPath('system.ai_provider', 'Gemini + Groq GPT-OSS (illustrative)');
     }
 
@@ -144,7 +145,14 @@ class DashboardTest extends TestCase
         $dashboard->assertOk()
             ->assertSee('theme-toggle-btn', false)
             ->assertSee('toggleTheme()', false)
-            ->assertSee("localStorage.getItem('horizon_theme')", false);
+            ->assertSee("localStorage.getItem('horizon_theme')", false)
+            ->assertSee('heatmap-cell', false)
+            ->assertSee('Heatmap color legend', false);
+
+        $styles = file_get_contents(resource_path('css/app.css'));
+        $this->assertIsString($styles);
+        $this->assertStringContainsString('.heatmap-cell.bias-bullish', $styles);
+        $this->assertStringContainsString('.heatmap-cell.bias-strong-bearish', $styles);
     }
 
     #[Test]

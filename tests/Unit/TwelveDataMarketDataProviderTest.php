@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\Market\TwelveDataMarketDataProvider;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
@@ -13,10 +14,20 @@ class TwelveDataMarketDataProviderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['horizon.twelve_data.api_key' => 'test-key']);
+        CarbonImmutable::setTestNow('2026-09-14T12:07:00Z');
+        config([
+            'horizon.twelve_data.api_key' => 'test-key',
+            'horizon.market_data.close_grace_seconds' => 30,
+        ]);
     }
 
-    #[Test] public function it_normalizes_sorts_and_discards_the_newest_candle(): void
+    protected function tearDown(): void
+    {
+        CarbonImmutable::setTestNow();
+        parent::tearDown();
+    }
+
+    #[Test] public function it_normalizes_sorts_and_excludes_only_incomplete_candles(): void
     {
         Http::fake(['*' => Http::response(['status' => 'ok', 'values' => $this->values()], 200)]);
         $candles = (new TwelveDataMarketDataProvider)->fetch('1h');
@@ -24,6 +35,18 @@ class TwelveDataMarketDataProviderTest extends TestCase
         $this->assertTrue($candles[0]->openedAt->lessThan($candles[249]->openedAt));
         $this->assertSame(2.0, $candles[249]->close);
         Http::assertSent(fn ($request) => $request['symbol'] === 'XAU/USD' && $request['interval'] === '1h' && ! str_contains($request->body(), 'test-key'));
+    }
+
+    #[Test] public function it_retains_the_provider_newest_candle_when_its_interval_is_complete(): void
+    {
+        $values = $this->values(offsetHours: 1);
+        Http::fake(['*' => Http::response(['status' => 'ok', 'values' => $values], 200)]);
+
+        $candles = (new TwelveDataMarketDataProvider)->fetch('1h');
+
+        $this->assertCount(250, $candles);
+        $this->assertSame('2026-09-14T11:00:00+00:00', $candles[249]->openedAt->toIso8601String());
+        $this->assertSame(1.0, $candles[249]->close);
     }
 
     #[Test] public function it_skips_sparse_invalid_ohlc_rows_without_fabricating_prices(): void
@@ -69,12 +92,12 @@ class TwelveDataMarketDataProviderTest extends TestCase
         (new TwelveDataMarketDataProvider)->fetch('1h');
     }
 
-    private function values(): array
+    private function values(int $offsetHours = 0): array
     {
         $values = [];
         for ($i = 0; $i < 261; $i++) {
             $close = 1 + $i;
-            $values[] = ['datetime' => now('UTC')->subHours($i)->format('Y-m-d H:i:s'), 'open' => (string) ($close - .2), 'high' => (string) ($close + .5), 'low' => (string) ($close - .5), 'close' => (string) $close, 'volume' => '100'];
+            $values[] = ['datetime' => now('UTC')->startOfHour()->subHours($i + $offsetHours)->format('Y-m-d H:i:s'), 'open' => (string) ($close - .2), 'high' => (string) ($close + .5), 'low' => (string) ($close - .5), 'close' => (string) $close, 'volume' => '100'];
         }
         return $values;
     }

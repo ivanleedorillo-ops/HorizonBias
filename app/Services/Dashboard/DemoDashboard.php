@@ -2,6 +2,9 @@
 
 namespace App\Services\Dashboard;
 
+use App\Services\Market\CandlePeriod;
+use Carbon\CarbonImmutable;
+
 final class DemoDashboard
 {
     public function data(bool $licensingGateApplied = false): array
@@ -19,6 +22,7 @@ final class DemoDashboard
                 'metrics' => ['close' => 2486.40, 'ema20' => 2479.12, 'ema50' => 2468.75, 'ema200' => 2412.20, 'rsi14' => 57.42, 'macd' => 4.12, 'macd_signal' => 2.86, 'roc10' => 0.74, 'atr14' => 13.65, 'adx14' => 24.18],
                 'explanations' => ['Moving-average alignment supports the upside.', 'Momentum measures lean positive.', 'This is illustrative demo analysis, not current market data.'],
                 'data_as_of' => '2026-09-01T12:00:00+00:00',
+                'completed_at' => CandlePeriod::closesAt(CarbonImmutable::parse('2026-09-01T12:00:00Z'), $key)->toIso8601String(),
                 'stale' => false,
                 'status' => 'demo',
             ];
@@ -28,7 +32,7 @@ final class DemoDashboard
             'mode' => 'demo',
             'notice' => $licensingGateApplied ? 'Live bias is disabled in production until external-display licensing is confirmed.' : 'Illustrative demo data — not live market analysis.',
             'symbol' => 'XAU/USD',
-            'quote' => ['price' => 2486.40, 'currency' => 'USD', 'change' => 12.30, 'change_percent' => 0.50, 'as_of' => '2026-09-01T12:00:00+00:00'],
+            'quote' => ['price' => 2486.40, 'currency' => 'USD', 'change' => 12.30, 'change_percent' => 0.50, 'as_of' => '2026-09-01T12:00:00+00:00', 'completed_at' => '2026-09-01T12:05:00+00:00'],
             'overall' => ['score' => 45, 'label' => 'Bullish', 'summary' => 'Illustrative multi-timeframe conditions lean bullish, led by the 4-hour and daily views.', 'generated_at' => '2026-09-01T12:00:00+00:00', 'stale' => false],
             'timeframes' => $frames,
             'macro' => [
@@ -44,7 +48,7 @@ final class DemoDashboard
                 'provider_status' => [],
                 'events' => [], 'generated_at' => '2026-09-01T12:00:00+00:00', 'stale' => false, 'status' => 'demo',
             ],
-            'system' => ['market_provider' => 'Illustrative fixtures', 'ai_provider' => 'Gemini + Groq GPT-OSS (illustrative)', 'licensing_gate_applied' => $licensingGateApplied],
+            'system' => ['market_provider' => 'Illustrative fixtures', 'market_provider_label' => 'Illustrative fixtures', 'ai_provider' => 'Gemini + Groq GPT-OSS (illustrative)', 'licensing_gate_applied' => $licensingGateApplied],
         ];
     }
 }

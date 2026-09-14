@@ -138,7 +138,7 @@
                             </a>
                         </div>
 
-                        <!-- 3 Compact Trust Indicators -->
+                        <!-- Compact Trust Indicators -->
                         <div class="grid grid-cols-2 gap-3 border-t border-[var(--color-border)] pt-5 sm:grid-cols-4">
                             <div>
                                 <span class="block font-bold text-sm text-[var(--color-text-primary)]">7 Horizons</span>
@@ -153,8 +153,8 @@
                                 <span class="text-xs text-[var(--color-text-muted)]">History and heatmap</span>
                             </div>
                             <div>
-                                <span class="block font-bold text-sm text-[var(--color-text-primary)]">Dual AI</span>
-                                <span class="text-xs text-[var(--color-text-muted)]">Gemini + Groq context</span>
+                                <span class="block font-bold text-sm text-[var(--color-text-primary)]">Dual AI &amp; PiP</span>
+                                <span class="text-xs text-[var(--color-text-muted)]">Context &amp; floating monitor</span>
                             </div>
                         </div>
                     </div>
@@ -298,7 +298,7 @@
                                 <span class="text-xs font-bold text-[var(--color-text-secondary)]">{{ $timeframe }}</span>
                                 <div class="grid grid-cols-12 gap-1">
                                     @foreach($states as $state)
-                                        <span class="h-4 rounded-sm border {{ $state === 'bullish' ? 'bias-bullish' : ($state === 'bearish' ? 'bias-bearish' : 'bias-neutral') }}" aria-hidden="true"></span>
+                                        <span class="heatmap-cell h-4 rounded-sm border {{ $state === 'bullish' ? 'bias-bullish' : ($state === 'bearish' ? 'bias-bearish' : 'bias-neutral') }}" aria-hidden="true"></span>
                                     @endforeach
                                 </div>
                             </div>
@@ -306,9 +306,9 @@
                     </div>
 
                     <div class="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-t border-[var(--color-border-subtle)] pt-4 text-xs text-[var(--color-text-muted)]">
-                        <span class="inline-flex items-center gap-2"><i class="h-2.5 w-2.5 rounded-sm border bias-bullish"></i>Bullish</span>
-                        <span class="inline-flex items-center gap-2"><i class="h-2.5 w-2.5 rounded-sm border bias-neutral"></i>Neutral</span>
-                        <span class="inline-flex items-center gap-2"><i class="h-2.5 w-2.5 rounded-sm border bias-bearish"></i>Bearish</span>
+                        <span class="inline-flex items-center gap-2"><i class="heatmap-cell h-2.5 w-2.5 rounded-sm border bias-bullish"></i>Bullish</span>
+                        <span class="inline-flex items-center gap-2"><i class="heatmap-cell h-2.5 w-2.5 rounded-sm border bias-neutral"></i>Neutral</span>
+                        <span class="inline-flex items-center gap-2"><i class="heatmap-cell h-2.5 w-2.5 rounded-sm border bias-bearish"></i>Bearish</span>
                     </div>
                 </div>
 
@@ -480,7 +480,7 @@
                     Ready to Inspect XAU/USD Market Structure?
                 </h2>
                 <p class="mx-auto max-w-xl text-sm sm:text-base text-[var(--color-text-secondary)] leading-relaxed">
-                    Access closed-bar timeframe scores, the historical heatmap and audit trail, TradingView charts, and dual-AI context in one decision-support dashboard.
+                    Access closed-bar timeframe scores, the historical heatmap and audit trail, TradingView charts, dual-AI context, and the desktop Floating Bias Monitor (Picture-in-Picture) in one decision-support dashboard.
                 </p>
                 <div class="pt-2">
                     <a href="{{ route('dashboard') }}" class="btn-gold text-base px-8 py-3.5" id="final-cta">
