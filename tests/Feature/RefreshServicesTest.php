@@ -109,7 +109,7 @@ class RefreshServicesTest extends TestCase
         app(MacroRefreshService::class)->refresh();
 
         $this->assertDatabaseHas('macro_briefs', [
-            'stance' => 'mixed', 'agreement' => 'agree', 'status' => 'ready', 'prompt_version' => 'dual-ai-history-v2',
+            'stance' => 'mixed', 'agreement' => 'agree', 'status' => 'ready', 'prompt_version' => 'dual-ai-official-evidence-v3',
         ]);
         $this->assertCount(2, MacroBrief::latest('generated_at')->first()->analyses);
 

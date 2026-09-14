@@ -91,6 +91,43 @@ return [
                 'allowed_hosts' => ['www.bea.gov'],
                 'relevance_filter' => true,
             ],
+            [
+                'name' => 'U.S. Bureau of Labor Statistics',
+                'url' => 'https://api.bls.gov/publicAPI/v2/timeseries/data/',
+                'format' => 'bls_api_json',
+                'allowed_hosts' => ['data.bls.gov'],
+                'relevance_filter' => false,
+                'series' => [
+                    'CUSR0000SA0' => [
+                        'label' => 'Consumer Price Index (CPI-U)',
+                        'measure' => 'index',
+                        'source_url' => 'https://data.bls.gov/timeseries/CUSR0000SA0',
+                    ],
+                    'CES0000000001' => [
+                        'label' => 'Total nonfarm payroll employment',
+                        'measure' => 'thousands',
+                        'source_url' => 'https://data.bls.gov/timeseries/CES0000000001',
+                    ],
+                    'LNS14000000' => [
+                        'label' => 'U.S. unemployment rate',
+                        'measure' => 'percent',
+                        'source_url' => 'https://data.bls.gov/timeseries/LNS14000000',
+                    ],
+                    'WPSFD4' => [
+                        'label' => 'Producer Price Index for final demand',
+                        'measure' => 'index',
+                        'source_url' => 'https://data.bls.gov/timeseries/WPSFD4',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'U.S. Department of the Treasury',
+                'url' => 'https://home.treasury.gov/news-data/press-releases/search/{year}.json',
+                'base_url' => 'https://home.treasury.gov',
+                'format' => 'treasury_json',
+                'allowed_hosts' => ['home.treasury.gov'],
+                'relevance_filter' => true,
+            ],
         ],
     ],
     'timeframes' => [

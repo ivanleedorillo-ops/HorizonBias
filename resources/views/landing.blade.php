@@ -115,14 +115,14 @@
                     <div class="space-y-6 text-left">
                         <div class="inline-flex items-center gap-2 rounded-full border border-[var(--color-gold-border)] bg-[var(--color-gold-bg)] px-3.5 py-1.5 text-xs font-semibold text-[var(--color-gold-accent)]">
                             <span class="status-dot"></span>
-                            <span>New: Bias History &amp; Historical Alignment</span>
+                            <span>New: Downloadable Bias Reports</span>
                         </div>
                         <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-tight">
                             Multi-Timeframe <br>
                             <span class="gold-gradient-text">Technical Bias</span> for Spot Gold.
                         </h1>
                         <p class="max-w-2xl text-base sm:text-lg leading-relaxed text-[var(--color-text-secondary)]" style="max-width: 65ch;">
-                            HorizonBias combines deterministic closed-candle analysis across seven horizons with a permanent audit trail. Inspect the current XAU/USD bias, see how it changed, and let two independent AIs interpret verified context without altering the score.
+                            HorizonBias combines deterministic closed-candle analysis across seven horizons with a permanent audit trail. Inspect the current XAU/USD bias, see how it changed, export a timestamped report, and let two independent AIs interpret verified context without altering the score.
                         </p>
 
                         <!-- CTA Group -->
@@ -153,8 +153,8 @@
                                 <span class="text-xs text-[var(--color-text-muted)]">History and heatmap</span>
                             </div>
                             <div>
-                                <span class="block font-bold text-sm text-[var(--color-text-primary)]">Dual AI &amp; PiP</span>
-                                <span class="text-xs text-[var(--color-text-muted)]">Context &amp; floating monitor</span>
+                                <span class="block font-bold text-sm text-[var(--color-text-primary)]">Reports &amp; PiP</span>
+                                <span class="text-xs text-[var(--color-text-muted)]">Exports &amp; floating monitor</span>
                             </div>
                         </div>
                     </div>
@@ -196,7 +196,7 @@
                                     <div class="panel-subtle p-3.5">
                                         <span class="block text-xs uppercase tracking-wider text-[var(--color-text-muted)]">Asset</span>
                                         <strong class="mt-1 block text-lg font-bold text-[var(--color-text-primary)]">XAU / USD</strong>
-                                        <span class="text-xs text-[var(--color-text-muted)]">OANDA Spot Gold</span>
+                                        <span class="text-xs text-[var(--color-text-muted)]">XAU/USD Spot Gold</span>
                                     </div>
                                     <div class="panel-subtle p-3.5">
                                         <span class="block text-xs uppercase tracking-wider text-[var(--color-text-muted)]">Agreement</span>
@@ -480,7 +480,7 @@
                     Ready to Inspect XAU/USD Market Structure?
                 </h2>
                 <p class="mx-auto max-w-xl text-sm sm:text-base text-[var(--color-text-secondary)] leading-relaxed">
-                    Access closed-bar timeframe scores, the historical heatmap and audit trail, TradingView charts, dual-AI context, and the desktop Floating Bias Monitor (Picture-in-Picture) in one decision-support dashboard.
+                    Access closed-bar timeframe scores, the historical heatmap and audit trail, TradingView charts, dual-AI context, downloadable reports, and the desktop Floating Bias Monitor in one decision-support dashboard.
                 </p>
                 <div class="pt-2">
                     <a href="{{ route('dashboard') }}" class="btn-gold text-base px-8 py-3.5" id="final-cta">

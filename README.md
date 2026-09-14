@@ -92,7 +92,9 @@ Create the Groq key at `console.groq.com`; an xAI Grok key is a different produc
 
 Run `php artisan ai:refresh-consensus`. The older `php artisan macro:refresh` command remains as a compatible alias. HorizonBias makes at most one Gemini request and one Groq request per refresh, then Laravel calculates agreement, final context, and confidence without another AI call. If one provider is unavailable, confidence is capped and the result is marked partial. If both fail, the last valid brief is retained as stale.
 
-HorizonBias retrieves bounded recent evidence from the Federal Reserve monetary-policy feed, Federal Reserve speeches and testimony feed, and U.S. Bureau of Economic Analysis feed. Both models analyze the same catalogue but may return only server-issued citation IDs. The application hydrates the official headline, publication timestamp, source name, and allow-listed HTTPS URL; model-generated URLs are never accepted. One unavailable feed does not prevent the remaining official sources from being used.
+HorizonBias retrieves bounded recent evidence from Federal Reserve monetary-policy releases and speeches, the U.S. Bureau of Economic Analysis, the BLS Public Data API for CPI, payroll employment, unemployment, and producer prices, and the U.S. Treasury's structured press-release catalogue. Both models analyze the same catalogue but may return only server-issued citation IDs. The application hydrates the official headline, evidence timestamp, source name, and allow-listed HTTPS URL; model-generated URLs are never accepted. One unavailable source does not prevent the remaining official sources from being used.
+
+BLS and Treasury evidence requires no API key. BLS API observations explicitly identify their data period and mark their timestamp as retrieval time rather than pretending it is the original release time. Some government sites may temporarily reject automated requests or become unavailable; HorizonBias logs the source-level failure, continues with every working source, and never fabricates replacement news.
 
 The default maximum evidence age is 14 days because major policy and economic releases are not necessarily published every day. If no recent relevant evidence exists, the brief remains technical-only and its event list is empty. Invalid or malformed AI results are rejected. The public dashboard shows both independent assessments, their USD-strength views, the deterministic consensus, disagreement, confidence, limitations, and verified citations.
 
@@ -141,6 +143,16 @@ The Floating Bias Monitor is a compact, responsive decision-support companion th
 3. Toggle the light/dark theme on the dashboard header and confirm the floating window immediately synchronizes its colors.
 4. Click **Return to Dashboard** inside the monitor to verify window focus returns to the main dashboard tab.
 5. In an unsupported browser or private browsing environment with PiP disabled, click **Floating Monitor** to confirm the standard popup fallback opens with the explanatory badge.
+
+## Downloadable bias reports
+
+The dashboard's **Report** menu exports one frozen view of the currently stored HorizonBias state. Exporting never refreshes Twelve Data, Gemini, Groq, or the official macro feeds, so it uses no provider credits.
+
+- `/reports/current/print` provides a branded, responsive light/dark print preview with browser Save as PDF support.
+- `/reports/current/pdf` downloads a compact fixed-layout PDF.
+- `/reports/current/docx` downloads an editable Office Open XML Word document.
+
+Every report includes the report ID, UTC timestamps, mode and freshness context, provider label, deterministic score, timeframe evidence, dual-AI context, historical-alignment summary, methodology boundaries, and the educational risk disclaimer. Demo and stale print reports are visibly marked. Export routes are read-only, rate limited, and generated from stored state only.
 
 ## Scheduler deployment
 

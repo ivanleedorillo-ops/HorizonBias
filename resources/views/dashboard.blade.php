@@ -72,6 +72,8 @@
                     <span x-text="data.mode === 'live' ? 'Live' : 'Demo'"></span>
                 </span>
 
+                <x-report-menu class="hidden lg:block" />
+
                 <!-- Floating Monitor Button -->
                 <button type="button"
                         id="floating-monitor-btn"
@@ -149,6 +151,10 @@
 
     <!-- Main Content Container -->
     <main id="overview" class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div class="flex justify-end lg:hidden">
+            <x-report-menu mobile />
+        </div>
+
         <!-- Hero Section: Spot Quote & Overall Bias Consensus -->
         <section class="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
             <!-- Spot Gold Quote Card -->
