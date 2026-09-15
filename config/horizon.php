@@ -40,6 +40,7 @@ return [
         'dual_enabled' => env('DUAL_AI_ENABLED', true),
         'free_tier_only' => env('AI_FREE_TIER_ONLY', true),
         'daily_request_cap' => (int) env('AI_DAILY_REQUEST_CAP', 24),
+        'refresh_cron' => '11 */3 * * *',
     ],
     'history' => [
         'neutral_atr_threshold' => (float) env('BIAS_HISTORY_NEUTRAL_ATR', 0.25),
@@ -131,12 +132,12 @@ return [
         ],
     ],
     'timeframes' => [
-        '5m' => ['label' => '5 Minutes', 'interval' => '5min', 'weight' => 0.05, 'stale_after' => 15],
-        '15m' => ['label' => '15 Minutes', 'interval' => '15min', 'weight' => 0.10, 'stale_after' => 45],
-        '1h' => ['label' => '1 Hour', 'interval' => '1h', 'weight' => 0.15, 'stale_after' => 180],
-        '4h' => ['label' => '4 Hours', 'interval' => '4h', 'weight' => 0.20, 'stale_after' => 720],
-        '1d' => ['label' => '1 Day', 'interval' => '1day', 'weight' => 0.25, 'stale_after' => 4320],
-        '1w' => ['label' => '1 Week', 'interval' => '1week', 'weight' => 0.15, 'stale_after' => 20160],
-        '1mo' => ['label' => '1 Month', 'interval' => '1month', 'weight' => 0.10, 'stale_after' => 64800],
+        '5m' => ['label' => '5 Minutes', 'interval' => '5min', 'weight' => 0.05, 'stale_after' => 15, 'refresh_cron' => '1-59/5 * * * *'],
+        '15m' => ['label' => '15 Minutes', 'interval' => '15min', 'weight' => 0.10, 'stale_after' => 45, 'refresh_cron' => '1,16,31,46 * * * *'],
+        '1h' => ['label' => '1 Hour', 'interval' => '1h', 'weight' => 0.15, 'stale_after' => 180, 'refresh_cron' => '3 * * * *'],
+        '4h' => ['label' => '4 Hours', 'interval' => '4h', 'weight' => 0.20, 'stale_after' => 720, 'refresh_cron' => '5 */4 * * *'],
+        '1d' => ['label' => '1 Day', 'interval' => '1day', 'weight' => 0.25, 'stale_after' => 4320, 'refresh_cron' => '7 * * * *'],
+        '1w' => ['label' => '1 Week', 'interval' => '1week', 'weight' => 0.15, 'stale_after' => 20160, 'refresh_cron' => '9 */6 * * *'],
+        '1mo' => ['label' => '1 Month', 'interval' => '1month', 'weight' => 0.10, 'stale_after' => 64800, 'refresh_cron' => '0 1,13 * * *'],
     ],
 ];

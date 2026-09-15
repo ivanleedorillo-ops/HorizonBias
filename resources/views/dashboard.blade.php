@@ -231,6 +231,124 @@
             </aside>
         </section>
 
+        <!-- Reliability & Change Summary -->
+        <section class="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]" aria-label="Snapshot reliability and recent changes">
+            <article class="panel p-5 sm:p-7" aria-labelledby="changes-heading">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="eyebrow text-[var(--color-gold-accent)]">Completed-Candle Comparison</p>
+                        <h2 id="changes-heading" class="mt-1 text-lg font-bold text-[var(--color-text-primary)] sm:text-xl">What Changed?</h2>
+                    </div>
+                    <span class="rounded-lg border px-2.5 py-1 text-xs font-bold uppercase tracking-wide"
+                          :class="statusBadgeClass(data.changes?.status)"
+                          x-text="humanize(data.changes?.status || 'collecting')"></span>
+                </div>
+
+                <p class="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]" x-text="data.changes?.summary"></p>
+
+                <template x-if="data.changes?.overall">
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-3.5">
+                        <div>
+                            <span class="block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Overall agreement</span>
+                            <span class="mt-1 block text-sm font-semibold text-[var(--color-text-primary)]">
+                                <span x-text="data.changes.overall.previous_bias"></span>
+                                <span class="mx-1 text-[var(--color-text-muted)]">→</span>
+                                <span x-text="data.changes.overall.current_bias"></span>
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <strong class="text-xl tabular-nums" :class="data.changes.overall.delta > 0 ? 'text-[var(--color-bullish-text)]' : (data.changes.overall.delta < 0 ? 'text-[var(--color-bearish-text)]' : 'text-[var(--color-neutral-text)]')" x-text="(data.changes.overall.delta > 0 ? '+' : '') + data.changes.overall.delta"></strong>
+                            <span class="block text-xs text-[var(--color-text-muted)]">score change</span>
+                        </div>
+                    </div>
+                </template>
+
+                <ul x-show="data.changes?.highlights?.length" class="mt-4 space-y-2" aria-label="Most important technical changes">
+                    <template x-for="highlight in data.changes.highlights" :key="highlight">
+                        <li class="flex gap-2.5 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                            <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-gold-accent)]"></span>
+                            <span x-text="highlight"></span>
+                        </li>
+                    </template>
+                </ul>
+
+                <details x-show="data.changes?.timeframes?.length" class="mt-4 border-t border-[var(--color-border-subtle)] pt-3">
+                    <summary class="cursor-pointer text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">Inspect all timeframe comparisons</summary>
+                    <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                        <template x-for="change in data.changes.timeframes" :key="change.key">
+                            <div class="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-page-secondary)] p-3 text-xs">
+                                <div class="flex items-center justify-between gap-2">
+                                    <strong class="text-[var(--color-text-primary)]" x-text="change.key"></strong>
+                                    <span class="tabular-nums font-bold" x-text="(change.delta > 0 ? '+' : '') + change.delta"></span>
+                                </div>
+                                <p class="mt-1 text-[var(--color-text-muted)]"><span x-text="change.previous_bias"></span> → <span x-text="change.current_bias"></span></p>
+                            </div>
+                        </template>
+                    </div>
+                </details>
+            </article>
+
+            <aside class="panel p-5 sm:p-7" aria-labelledby="health-heading">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="eyebrow text-[var(--color-gold-accent)]">Refresh Status Center</p>
+                        <h2 id="health-heading" class="mt-1 text-lg font-bold text-[var(--color-text-primary)] sm:text-xl">Data Health</h2>
+                    </div>
+                    <span class="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] px-2 py-1 font-mono text-[10px] text-[var(--color-text-muted)]" x-text="data.system?.snapshot_id || 'Snapshot unavailable'"></span>
+                </div>
+
+                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-4">
+                        <div class="flex items-center justify-between gap-2">
+                            <strong class="text-sm text-[var(--color-text-primary)]">Technical engine</strong>
+                            <span class="rounded border px-2 py-0.5 text-[10px] font-bold uppercase" :class="statusBadgeClass(data.system?.health?.market?.status)" x-text="humanize(data.system?.health?.market?.status || 'unavailable')"></span>
+                        </div>
+                        <p class="mt-2 text-xs leading-relaxed text-[var(--color-text-muted)]" x-text="data.system?.health?.market?.message"></p>
+                        <dl class="mt-3 space-y-1.5 text-xs">
+                            <div class="flex justify-between gap-3"><dt class="text-[var(--color-text-muted)]">Market through</dt><dd class="text-right text-[var(--color-text-secondary)]" x-text="formatTime(data.system?.health?.market?.quote?.completed_at || data.system?.health?.market?.quote?.data_as_of)"></dd></div>
+                            <div class="flex justify-between gap-3"><dt class="text-[var(--color-text-muted)]">Last success</dt><dd class="text-right text-[var(--color-text-secondary)]" x-text="formatTime(data.system?.health?.market?.last_success_at)"></dd></div>
+                            <div class="flex justify-between gap-3"><dt class="text-[var(--color-text-muted)]">Last attempt</dt><dd class="text-right text-[var(--color-text-secondary)]" x-text="formatTime(data.system?.health?.market?.last_attempt_at)"></dd></div>
+                            <div class="flex justify-between gap-3"><dt class="text-[var(--color-text-muted)]">Next scheduled</dt><dd class="text-right text-[var(--color-text-secondary)]" x-text="data.system?.health?.market?.next_scheduled_at ? formatTime(data.system.health.market.next_scheduled_at) : 'Not scheduled'"></dd></div>
+                        </dl>
+                        <p x-show="data.system?.health?.market?.rate_limit_status === 'rate_limited'" class="mt-3 rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-2 text-[10px] text-[var(--color-neutral-text)]">A provider rate limit was observed during the latest affected timeframe refresh.</p>
+                    </div>
+
+                    <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-page-secondary)] p-4">
+                        <div class="flex items-center justify-between gap-2">
+                            <strong class="text-sm text-[var(--color-text-primary)]">Dual-AI context</strong>
+                            <span class="rounded border px-2 py-0.5 text-[10px] font-bold uppercase" :class="statusBadgeClass(data.system?.health?.ai?.status)" x-text="humanize(data.system?.health?.ai?.status || 'unavailable')"></span>
+                        </div>
+                        <p class="mt-2 text-xs leading-relaxed text-[var(--color-text-muted)]" x-text="data.system?.health?.ai?.message"></p>
+                        <dl class="mt-3 space-y-1.5 text-xs">
+                            <div class="flex justify-between gap-3"><dt class="text-[var(--color-text-muted)]">Last valid</dt><dd class="text-right text-[var(--color-text-secondary)]" x-text="formatTime(data.system?.health?.ai?.last_success_at)"></dd></div>
+                            <div class="flex justify-between gap-3"><dt class="text-[var(--color-text-muted)]">Last attempt</dt><dd class="text-right text-[var(--color-text-secondary)]" x-text="formatTime(data.system?.health?.ai?.last_attempt_at)"></dd></div>
+                            <div class="flex justify-between gap-3"><dt class="text-[var(--color-text-muted)]">Next scheduled</dt><dd class="text-right text-[var(--color-text-secondary)]" x-text="data.system?.health?.ai?.next_scheduled_at ? formatTime(data.system.health.ai.next_scheduled_at) : 'Not scheduled'"></dd></div>
+                        </dl>
+                        <div x-show="data.system?.health?.ai?.providers?.length" class="mt-3 space-y-1 border-t border-[var(--color-border-subtle)] pt-2">
+                            <template x-for="provider in data.system.health.ai.providers" :key="provider.provider">
+                                <div class="flex justify-between gap-2 text-[10px] text-[var(--color-text-muted)]">
+                                    <span x-text="provider.provider"></span>
+                                    <span x-text="provider.requests_today != null ? provider.requests_today + ' / ' + provider.daily_cap + ' app attempts today' : humanize(provider.status)"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <details class="mt-4 border-t border-[var(--color-border-subtle)] pt-3">
+                    <summary class="cursor-pointer text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">View timeframe refresh schedule</summary>
+                    <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <template x-for="frame in data.system?.health?.market?.timeframes || []" :key="frame.key">
+                            <div class="rounded-lg border border-[var(--color-border-subtle)] p-2.5 text-xs">
+                                <div class="flex items-center justify-between gap-2"><strong x-text="frame.key"></strong><span :class="statusBadgeClass(frame.status)" class="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase" x-text="humanize(frame.status)"></span></div>
+                                <p class="mt-1 text-[10px] text-[var(--color-text-muted)]" x-text="frame.next_scheduled_at ? 'Next ' + formatTime(frame.next_scheduled_at) : 'No live schedule'"></p>
+                            </div>
+                        </template>
+                    </div>
+                </details>
+            </aside>
+        </section>
+
         <!-- Seven-Timeframe Horizon Selector Matrix -->
         <section aria-labelledby="timeframe-heading" class="space-y-3">
             <div class="flex items-center justify-between">
@@ -878,6 +996,7 @@
                     <span>Dashboard checked: <strong data-monitor="last-refresh" class="tabular-nums font-semibold text-[var(--color-text-secondary)]">—</strong></span>
                     <span>Closed-bar UTC</span>
                 </div>
+                <div class="text-[9px] font-mono text-[var(--color-text-muted)]">Snapshot: <span data-monitor="snapshot-id">Snapshot unavailable</span></div>
 
                 <p class="text-[10px] leading-snug text-[var(--color-text-muted)]">
                     Educational bias only — not a trading signal or recommendation. Verify independently.

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Contracts\MarketDataProvider;
 use App\Models\BiasSnapshot;
 use App\Models\MacroBrief;
+use App\Models\RefreshRun;
 use App\Services\Analysis\BiasScorer;
 use App\Services\Analysis\IndicatorCalculator;
 use App\Services\Macro\MacroRefreshService;
@@ -70,6 +71,50 @@ class RefreshServicesTest extends TestCase
         } catch (RuntimeException) {
         }
         $this->assertDatabaseHas('bias_snapshots', ['timeframe' => '1h', 'status' => 'stale']);
+    }
+
+    #[Test]
+    public function market_command_records_safe_refresh_health_without_exposing_provider_errors(): void
+    {
+        config(['horizon.market_mode' => 'live']);
+        $provider = new class($this->candles()) implements MarketDataProvider
+        {
+            public function __construct(private array $candles) {}
+
+            public function fetch(string $timeframe): array
+            {
+                return $this->candles;
+            }
+
+            public function name(): string
+            {
+                return 'Fake';
+            }
+        };
+        $this->app->instance(MarketDataProvider::class, $provider);
+
+        $this->artisan('market:refresh-bias', ['--timeframe' => '1h'])->assertSuccessful();
+        $this->assertDatabaseHas('refresh_runs', ['subsystem' => 'market', 'target' => '1h', 'status' => 'success']);
+
+        $failing = new class implements MarketDataProvider
+        {
+            public function fetch(string $timeframe): array
+            {
+                throw new RuntimeException('offline secret-provider-detail');
+            }
+
+            public function name(): string
+            {
+                return 'Fake';
+            }
+        };
+        $this->app->instance(MarketDataProvider::class, $failing);
+        $this->artisan('market:refresh-bias', ['--timeframe' => '1h'])->assertFailed();
+
+        $failed = RefreshRun::query()->where('status', 'failed')->latest('id')->firstOrFail();
+        $this->assertSame('connection', $failed->reason_code);
+        $this->assertSame('Provider connection failed or timed out.', $failed->safe_message);
+        $this->assertStringNotContainsString('secret-provider-detail', $failed->safe_message);
     }
 
     #[Test]

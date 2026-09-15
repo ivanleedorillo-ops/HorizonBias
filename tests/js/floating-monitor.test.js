@@ -401,11 +401,13 @@ describe('Floating Monitor State Normalization', () => {
                     ],
                     summary: 'Illustrative dual-AI consensus.',
                 },
+                system: { snapshot_id: 'HB-DEMO-20260901' },
             };
 
             const vm = buildMonitorViewModel(data, false);
             assert.equal(vm.status.modeLabel, 'Demo');
             assert.equal(vm.status.freshnessLabel, 'Demo');
+            assert.equal(vm.snapshotId, 'HB-DEMO-20260901');
             assert.equal(vm.quote.priceDisplay, '$2,486.40');
             assert.match(vm.quote.asOfDisplay, /^Through /);
             assert.match(vm.quote.asOfDisplay, /12:05/);
@@ -428,6 +430,7 @@ describe('Floating Monitor State Normalization', () => {
             assert.equal(vm.timeframes.length, 7);
             assert.ok(vm.timeframes.every(tf => tf.isUnavailable));
             assert.equal(vm.ai.biasLabel, 'Unavailable');
+            assert.equal(vm.snapshotId, 'Snapshot unavailable');
         });
     });
 

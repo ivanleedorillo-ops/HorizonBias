@@ -14,7 +14,7 @@ final class ReportDocumentContent
         };
 
         $add($report['title'], 'title');
-        $add('Concise stored decision-support snapshot · '.$report['report_id'], 'subtitle');
+        $add('Concise stored decision-support snapshot · '.$report['report_id'].' · Source '.($report['system']['snapshot_id'] ?? 'unavailable'), 'subtitle');
         $add('Generated '.$this->time($report['generated_at']).' · '.strtoupper($report['mode']).' mode', 'meta');
         if (! empty($report['notice'])) {
             $add('DATA NOTICE · '.$report['notice'], 'notice');

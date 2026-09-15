@@ -16,6 +16,8 @@ final class DashboardService
         private readonly BiasScorer $scorer,
         private readonly DemoDashboard $demo,
         private readonly LatestBiasSnapshots $latestSnapshots,
+        private readonly SnapshotComparisonService $comparison,
+        private readonly RefreshStatusService $refreshStatus,
     ) {}
 
     public function data(): array
@@ -53,9 +55,11 @@ final class DashboardService
         $price = $quoteSnapshot?->metrics['close'] ?? null;
         $macroData = $this->macroData($macro);
         $configuredProvider = (string) config('horizon.market_provider');
+        $snapshotId = $this->snapshotId($latest, $macro?->id);
+        $mode = $overall ? 'live' : 'unavailable';
 
         return [
-            'mode' => $overall ? 'live' : 'unavailable',
+            'mode' => $mode,
             'notice' => $overall ? null : 'Live analysis is incomplete. Waiting for required 1h, 4h, 1d and one additional timeframe.',
             'symbol' => config('horizon.symbol'),
             'quote' => [
@@ -68,16 +72,32 @@ final class DashboardService
                     ? CandlePeriod::closesAt($quoteSnapshot->data_as_of, $quoteSnapshot->timeframe)->toIso8601String()
                     : null,
             ],
-            'overall' => $overall ? ['score' => $overall['score'], 'label' => $overall['label'], 'summary' => 'Deterministic weighted agreement across available timeframes.', 'generated_at' => $latest->max('generated_at')?->toIso8601String(), 'stale' => collect($frames)->contains('stale', true)] : null,
+            'overall' => $overall ? ['score' => $overall['score'], 'label' => $overall['label'], 'summary' => 'Deterministic weighted agreement across available timeframes.', 'generated_at' => $latest->max('generated_at')?->toIso8601String(), 'stale' => collect($frames)->contains('stale', true), 'status' => collect($frames)->contains('stale', true) ? 'stale' : 'ready'] : null,
             'timeframes' => $frames,
+            'changes' => $this->comparison->build($latest, $overall),
             'macro' => $macroData,
             'system' => [
+                'snapshot_id' => $snapshotId,
+                'assembled_at' => now('UTC')->toIso8601String(),
                 'market_provider' => $configuredProvider,
                 'market_provider_label' => $quoteSnapshot?->provider ?? Str::headline($configuredProvider),
                 'ai_provider' => 'Gemini + Groq GPT-OSS',
                 'licensing_gate_applied' => false,
+                'health' => $this->refreshStatus->build('live', $latest, $frames, $macro),
             ],
         ];
+    }
+
+    private function snapshotId($latest, ?int $macroId): string
+    {
+        $identity = $latest->sortKeys()->map(fn ($snapshot) => implode(':', [
+            $snapshot->timeframe,
+            $snapshot->id,
+            $snapshot->status,
+        ]))->values()->all();
+        $identity[] = 'macro:'.($macroId ?? 'none');
+
+        return 'HB-'.strtoupper(substr(hash('sha256', implode('|', $identity)), 0, 12));
     }
 
     private function macroData(?MacroBrief $macro): array

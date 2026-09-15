@@ -346,6 +346,7 @@ export function buildMonitorViewModel(data = {}, connectionIssue = false) {
     const ai = normalizeMonitorAi(macro);
 
     return {
+        snapshotId: data?.system?.snapshot_id || 'Snapshot unavailable',
         status,
         quote: {
             priceDisplay,

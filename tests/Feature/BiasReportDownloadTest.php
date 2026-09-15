@@ -38,6 +38,7 @@ class BiasReportDownloadTest extends TestCase
         $this->get('/reports/current/print')->assertOk()
             ->assertHeader('Cache-Control', 'no-store, private')
             ->assertSee('HorizonBias XAU/USD Bias Report')
+            ->assertSee('HB-DEMO-20260901')
             ->assertSee('ILLUSTRATIVE DEMO')
             ->assertSee('Seven-timeframe technical evidence')
             ->assertSee('Dual-AI context and verified events')
@@ -70,6 +71,7 @@ class BiasReportDownloadTest extends TestCase
         $response->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF-1.4', $content);
         $this->assertStringContainsString('HorizonBias XAU/USD Bias Report', $content);
+        $this->assertStringContainsString('HB-DEMO-20260901', $content);
         $this->assertStringEndsWith("%%EOF\n", $content);
         $this->assertGreaterThan(3000, strlen($content));
     }
@@ -94,6 +96,7 @@ class BiasReportDownloadTest extends TestCase
             $this->assertTrue(isset($archive['word/document.xml']));
             $this->assertTrue(isset($archive['word/styles.xml']));
             $this->assertStringContainsString('HorizonBias XAU/USD Bias Report', $archive['word/document.xml']->getContent());
+            $this->assertStringContainsString('HB-DEMO-20260901', $archive['word/document.xml']->getContent());
             $this->assertStringContainsString('EXECUTIVE SUMMARY', $archive['word/document.xml']->getContent());
             $this->assertStringContainsString('SEVEN-TIMEFRAME MATRIX', $archive['word/document.xml']->getContent());
             $this->assertStringNotContainsString('Illustrative Gemini assessment for layout testing only.', $archive['word/document.xml']->getContent());

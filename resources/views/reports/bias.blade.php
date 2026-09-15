@@ -225,6 +225,7 @@
         <div class="meta">
             <span class="status">{{ $modeLabel }}{{ $overallStale ? ' · STALE' : '' }}</span><br>
             <strong>{{ $report['report_id'] }}</strong><br>
+            Source {{ $report['system']['snapshot_id'] ?? 'Snapshot unavailable' }}<br>
             Generated {{ $time($report['generated_at']) }}
         </div>
     </header>

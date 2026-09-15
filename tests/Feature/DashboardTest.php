@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\BiasHistoryPoint;
+use App\Models\BiasSnapshot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
@@ -54,6 +56,9 @@ class DashboardTest extends TestCase
             ->assertSee('HorizonBias')
             ->assertSee('Illustrative demo data')
             ->assertSee('Bias History &amp; Historical Alignment', false)
+            ->assertSee('What Changed?')
+            ->assertSee('Refresh Status Center')
+            ->assertSee('Data Health')
             ->assertSee('bias-history-chart', false)
             ->assertSee('OANDA:XAUUSD', false)
             ->assertSee('href="'.url('/').'"', false)
@@ -81,17 +86,72 @@ class DashboardTest extends TestCase
                 'quote' => ['price', 'currency', 'change', 'change_percent', 'as_of', 'completed_at'],
                 'overall' => ['score', 'label', 'summary', 'generated_at', 'stale'],
                 'timeframes' => [['completed_at']],
+                'changes' => ['status', 'summary', 'overall', 'highlights', 'timeframes'],
                 'macro' => [
                     'stance', 'gold_bias', 'usd_strength', 'risk_level', 'confidence',
                     'agreement', 'summary', 'limitations', 'analyses', 'provider_status',
                     'historical_assessment', 'events', 'generated_at', 'stale', 'status',
                 ],
-                'system' => ['market_provider', 'market_provider_label', 'ai_provider', 'licensing_gate_applied'],
+                'system' => [
+                    'snapshot_id', 'assembled_at', 'market_provider', 'market_provider_label', 'ai_provider', 'licensing_gate_applied',
+                    'health' => [
+                        'checked_at',
+                        'market' => ['status', 'last_success_at', 'last_attempt_at', 'next_scheduled_at', 'rate_limit_status', 'message', 'quote', 'timeframes'],
+                        'ai' => ['status', 'last_success_at', 'last_attempt_at', 'next_scheduled_at', 'failure_code', 'message', 'providers'],
+                    ],
+                ],
             ]);
         $this->getJson('/api/dashboard')
             ->assertJsonCount(2, 'macro.analyses')
             ->assertJsonPath('quote.completed_at', '2026-09-01T12:05:00+00:00')
+            ->assertJsonPath('changes.status', 'demo')
+            ->assertJsonPath('system.snapshot_id', 'HB-DEMO-20260901')
+            ->assertJsonPath('system.health.market.status', 'demo')
             ->assertJsonPath('system.ai_provider', 'Gemini + Groq GPT-OSS (illustrative)');
+    }
+
+    #[Test]
+    public function live_dashboard_exposes_stable_snapshot_health_and_completed_candle_changes(): void
+    {
+        config(['horizon.market_mode' => 'live']);
+        $now = now('UTC');
+
+        foreach (array_keys(config('horizon.timeframes')) as $timeframe) {
+            BiasSnapshot::create([
+                'symbol' => 'XAU/USD', 'timeframe' => $timeframe, 'score' => -20, 'label' => 'Bearish',
+                'component_scores' => ['trend' => -10, 'momentum' => -10, 'structure' => 0, 'breakout' => 0],
+                'metrics' => ['close' => 2400], 'explanations' => [], 'provider' => 'Fake',
+                'data_as_of' => $now->copy()->subMinutes(10), 'generated_at' => $now->copy()->subMinutes(9), 'status' => 'ready',
+            ]);
+            BiasSnapshot::create([
+                'symbol' => 'XAU/USD', 'timeframe' => $timeframe, 'score' => 20, 'label' => 'Bullish',
+                'component_scores' => ['trend' => 10, 'momentum' => 10, 'structure' => 0, 'breakout' => 0],
+                'metrics' => ['close' => 2410], 'explanations' => [], 'provider' => 'Fake',
+                'data_as_of' => $now->copy()->subMinutes(5), 'generated_at' => $now->copy()->subMinutes(4), 'status' => 'ready',
+            ]);
+        }
+
+        foreach ([[-20, 'Bearish', 'old'], [20, 'Bullish', 'new']] as $index => [$score, $label, $hash]) {
+            BiasHistoryPoint::create([
+                'symbol' => 'XAU/USD', 'scope' => 'overall', 'score' => $score, 'label' => $label,
+                'component_scores' => null, 'metrics' => [], 'source_snapshot_ids' => [$index + 1],
+                'source_hash' => $hash, 'data_as_of' => $now->copy()->subMinutes(10 - ($index * 5)),
+                'generated_at' => $now->copy()->subMinutes(9 - ($index * 5)), 'status' => 'ready',
+            ]);
+        }
+
+        $first = $this->getJson('/api/dashboard')->assertOk();
+        $snapshotId = $first->json('system.snapshot_id');
+
+        $this->assertMatchesRegularExpression('/^HB-[A-F0-9]{12}$/', $snapshotId);
+        $first->assertJsonPath('mode', 'live')
+            ->assertJsonPath('overall.score', 20)
+            ->assertJsonPath('changes.status', 'ready')
+            ->assertJsonPath('changes.overall.delta', 40)
+            ->assertJsonPath('system.health.market.status', 'ready')
+            ->assertJsonPath('system.health.ai.status', 'unavailable');
+        $this->assertNotEmpty($first->json('changes.highlights'));
+        $this->getJson('/api/dashboard')->assertJsonPath('system.snapshot_id', $snapshotId);
     }
 
     #[Test]

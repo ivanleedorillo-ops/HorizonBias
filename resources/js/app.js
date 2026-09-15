@@ -523,6 +523,10 @@ const horizonDashboard = () => {
                     hour12: false,
                 }).format(new Date()) + ' UTC';
             }
+            const snapshotId = doc.querySelector('[data-monitor="snapshot-id"]');
+            if (snapshotId) {
+                snapshotId.textContent = vm.snapshotId;
+            }
         },
         syncFloatingTheme() {
             if (!this.floatingWindow || this.floatingWindow.closed) return;
@@ -683,6 +687,12 @@ const horizonDashboard = () => {
             if (value.includes('bullish')) return 'bias-bullish';
             if (value.includes('strong bearish')) return 'bias-strong-bearish';
             if (value.includes('bearish')) return 'bias-bearish';
+            return 'bias-neutral';
+        },
+        statusBadgeClass(status = '') {
+            const value = String(status ?? '').toLowerCase();
+            if (['ready', 'success'].includes(value)) return 'bias-bullish';
+            if (['failed', 'degraded', 'unavailable'].includes(value)) return 'bias-bearish';
             return 'bias-neutral';
         },
         formatNumber(value, decimals = 2) {

@@ -71,6 +71,17 @@ Refresh one horizon with `php artisan market:refresh-bias --timeframe=4h`.
 
 Market timestamps use UTC. Provider candle timestamps represent the start of an interval, while the dashboard displays the calculated completion time. HorizonBias filters candles by their interval end plus `MARKET_CANDLE_CLOSE_GRACE_SECONDS` instead of blindly dropping the provider's newest row. The 5-minute and 15-minute refreshes run one minute after their candle boundaries so completed bars have time to be published. “Dashboard checked” is only the browser's latest stored-data check and is not a market-data timestamp.
 
+## Refresh health and completed-candle changes
+
+The dashboard includes a read-only **Refresh Status Center** and **What Changed?** summary. These features use stored Laravel records only and do not make additional Twelve Data, Gemini, Groq, or official-feed requests.
+
+- Every scheduled or manually invoked market/AI command records a safe success, partial, or failure result in `refresh_runs`. Public output receives only a bounded reason category and sanitized message; raw provider errors and credentials remain in server logs.
+- Market and AI status are shown independently with last-success, last-attempt, and next-scheduled UTC timestamps. Twelve Data account-credit usage is not fabricated when the provider does not expose it; only an observed rate-limit failure is reported.
+- **What Changed?** compares each latest timeframe with its previous distinct completed-candle snapshot and identifies the largest deterministic component changes. It does not call AI and cannot create an entry recommendation.
+- A stable public snapshot identifier is derived from the stored market snapshot set and macro brief. The dashboard, floating monitor, and downloaded report show the same identifier until their source state changes.
+
+After pulling this feature, run `php artisan migrate` before restarting the scheduler.
+
 ## Free-tier dual-AI macro context
 
 ```dotenv

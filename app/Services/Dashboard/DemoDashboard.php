@@ -35,6 +35,13 @@ final class DemoDashboard
             'quote' => ['price' => 2486.40, 'currency' => 'USD', 'change' => 12.30, 'change_percent' => 0.50, 'as_of' => '2026-09-01T12:00:00+00:00', 'completed_at' => '2026-09-01T12:05:00+00:00'],
             'overall' => ['score' => 45, 'label' => 'Bullish', 'summary' => 'Illustrative multi-timeframe conditions lean bullish, led by the 4-hour and daily views.', 'generated_at' => '2026-09-01T12:00:00+00:00', 'stale' => false],
             'timeframes' => $frames,
+            'changes' => [
+                'status' => 'demo',
+                'summary' => 'Illustrative comparison showing how completed-candle changes will appear in live mode.',
+                'overall' => ['previous_score' => 35, 'current_score' => 45, 'delta' => 10, 'previous_bias' => 'Bullish', 'current_bias' => 'Bullish', 'label_changed' => false, 'compared_at' => '2026-09-01T11:00:00+00:00'],
+                'highlights' => ['4h moved +15 points (Bullish to Strong Bullish); Trend +10, Momentum +5.'],
+                'timeframes' => [],
+            ],
             'macro' => [
                 'stance' => 'mixed', 'risk_level' => 'medium',
                 'gold_bias' => 'neutral', 'usd_strength' => 'neutral', 'confidence' => 52, 'agreement' => 'agree',
@@ -48,7 +55,33 @@ final class DemoDashboard
                 'provider_status' => [],
                 'events' => [], 'generated_at' => '2026-09-01T12:00:00+00:00', 'stale' => false, 'status' => 'demo',
             ],
-            'system' => ['market_provider' => 'Illustrative fixtures', 'market_provider_label' => 'Illustrative fixtures', 'ai_provider' => 'Gemini + Groq GPT-OSS (illustrative)', 'licensing_gate_applied' => $licensingGateApplied],
+            'system' => [
+                'snapshot_id' => 'HB-DEMO-20260901',
+                'assembled_at' => '2026-09-01T12:00:00+00:00',
+                'market_provider' => 'Illustrative fixtures',
+                'market_provider_label' => 'Illustrative fixtures',
+                'ai_provider' => 'Gemini + Groq GPT-OSS (illustrative)',
+                'licensing_gate_applied' => $licensingGateApplied,
+                'health' => [
+                    'checked_at' => '2026-09-01T12:00:00+00:00',
+                    'market' => [
+                        'status' => 'demo', 'last_success_at' => null, 'last_attempt_at' => null, 'next_scheduled_at' => null,
+                        'rate_limit_status' => 'not_applicable',
+                        'message' => 'Demo mode uses fixed illustrative data and does not call the market provider.',
+                        'quote' => ['status' => 'demo', 'data_as_of' => '2026-09-01T12:00:00+00:00', 'completed_at' => '2026-09-01T12:05:00+00:00'],
+                        'timeframes' => collect(config('horizon.timeframes'))->map(fn (array $settings, string $key) => [
+                            'key' => $key, 'label' => $settings['label'], 'status' => 'demo',
+                            'data_as_of' => '2026-09-01T12:00:00+00:00', 'completed_at' => null,
+                            'last_success_at' => null, 'last_attempt_at' => null, 'next_scheduled_at' => null,
+                            'failure_code' => null, 'message' => 'Illustrative fixture; no provider refresh is scheduled.',
+                        ])->values()->all(),
+                    ],
+                    'ai' => [
+                        'status' => 'demo', 'last_success_at' => null, 'last_attempt_at' => null, 'next_scheduled_at' => null,
+                        'failure_code' => null, 'message' => 'Illustrative AI content; no model request is made in demo mode.', 'providers' => [],
+                    ],
+                ],
+            ],
         ];
     }
 }
